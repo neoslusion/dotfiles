@@ -1,0 +1,113 @@
+#!/bin/bash
+# dotsync — fast redeploy of a single config module (Linux/WSL).
+#
+# The dotfiles deploy by COPY, not symlink (robust across WSL + native
+# Windows, keeps live app-state out of the repo). The tradeoff is that edits
+# in the repo don't go live until re-deployed. This is the one-command fix:
+# copy `config/<module>` from the repo to its deployed location, without
+# running the full installer.
+#
+# Usage:
+#   dotsync nvim            # sync one module
+#   dotsync nvim lazygit    # sync several
+#   dotsync all             # sync every clean directory module
+#   dotsync --list          # show what can be synced
+#   dotsync --dry-run nvim  # show what would happen, change nothing
+#
+# Scope: this handles the "clean" directory modules whose deploy is simply
+# config/<name> -> ~/.config/<name>. Modules with templated or multi-target
+# deployment (terminal/zsh, tmux, agents, claude, codex, antigravity, opencode) are
+# intentionally NOT handled here; use the installer:
+#     ./install.sh --config
+set -euo pipefail
+
+# ---- locate the repo (script lives in <repo>/scripts, or on PATH) -----------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/utils/paths.sh"
+if REPO="$(dotfiles_resolve_repo "$PWD" "$SCRIPT_DIR/..")"; then :; else
+    repo_status=$?
+    echo "dotsync: could not locate the dotfiles repo (config/ not found)." >&2
+    echo "         Run from inside the checkout or set DOTFILES_REPO." >&2
+    exit "$repo_status"
+fi
+CONFIG_SRC="$REPO/config"
+DEST_ROOT="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+# Modules with bespoke/templated deployment — refuse and point at the installer.
+BESPOKE="terminal tmux agents claude codex antigravity opencode"
+
+# Clean directory modules: deploy is config/<name> -> $DEST_ROOT/<name>.
+clean_modules() {
+    local d name
+    for d in "$CONFIG_SRC"/*/; do
+        name="$(basename "$d")"
+        case " $BESPOKE " in *" $name "*) continue ;; esac
+        echo "$name"
+    done
+}
+
+DRY=0
+c()  { printf '\033[36m%s\033[0m' "$1"; }   # cyan
+ok() { printf '\033[32m%s\033[0m' "$1"; }   # green
+warn(){ printf '\033[33m%s\033[0m' "$1"; }  # yellow
+
+usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; }
+
+sync_one() {
+    local name="$1"
+    local src="$CONFIG_SRC/$name"
+    local dest="$DEST_ROOT/$name"
+
+    if [ ! -d "$src" ]; then
+        echo "  $(warn skip) $name — no such module in config/" >&2
+        return 1
+    fi
+    case " $BESPOKE " in
+        *" $name "*)
+            echo "  $(warn skip) $name — templated/multi-target; use: ./install.sh --config" >&2
+            return 1 ;;
+    esac
+
+    # Unchanged: leave it alone, so its last real backup survives.
+    if diff -rq "$src" "$dest" >/dev/null 2>&1; then
+        echo "  $(ok unchanged) $name"
+        return 0
+    fi
+
+    if [ "$DRY" -eq 1 ]; then
+        echo "  $(c would) sync $name -> $dest"
+        return 0
+    fi
+
+    if [ -e "$dest" ]; then
+        rm -rf "${dest}.bak"
+        mv "$dest" "${dest}.bak"
+    fi
+    mkdir -p "$dest"
+    cp -R "$src/." "$dest/"
+    echo "  $(ok synced) $name -> $dest"
+}
+
+# ---- arg parsing ------------------------------------------------------------
+[ $# -eq 0 ] && { usage; exit 0; }
+
+TARGETS=()
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help)    usage; exit 0 ;;
+        --list)       echo "Syncable modules:"; clean_modules | sed 's/^/  /'; exit 0 ;;
+        --dry-run|-n) DRY=1 ;;
+        all)          while read -r m; do TARGETS+=("$m"); done < <(clean_modules) ;;
+        -*)           echo "dotsync: unknown option '$arg'" >&2; exit 2 ;;
+        *)            TARGETS+=("$arg") ;;
+    esac
+done
+
+[ ${#TARGETS[@]} -eq 0 ] && { echo "dotsync: nothing to sync (need a module, or 'all')." >&2; exit 2; }
+
+echo "dotsync: $REPO/config -> $DEST_ROOT"
+rc=0
+for m in "${TARGETS[@]}"; do sync_one "$m" || rc=1; done
+[ "$DRY" -eq 0 ] && echo "Done. Replaced configs were backed up to <dest>.bak."
+echo "Reminder: in Neovim run :Lazy restore after syncing to match lazy-lock.json."
+exit $rc

@@ -1,0 +1,18 @@
+{
+  "cleanupPeriodDays": 3650,
+  "env": {
+    "USER_VAR": "kept"
+  },
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "rtk hook claude" } ] }
+    ],
+    "SessionStart": [
+      { "matcher": "startup", "hooks": [ { "type": "command", "command": "python3 on_startup.py", "timeout": 15 } ] }
+    ]
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true
+  },
+  "theme": "light"
+}

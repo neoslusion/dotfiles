@@ -1,0 +1,1 @@
+{ "name": "context-meter", "version": "0.1.0", "description": "Band above the prompt showing where the context window goes: tool calls, tool results, thinking, prompts, replies, system", "types": "./types/index.d.ts" }

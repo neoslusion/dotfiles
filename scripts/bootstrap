@@ -1,0 +1,53 @@
+#!/bin/bash
+# bootstrap — one-shot fresh-machine setup.
+# Clones this repo and runs the installer.
+#
+# Usage:
+#   bash scripts/bootstrap <commit-sha>          (required; pin to a known-good commit)
+#   DOTFILES_ALLOW_MOVING_BOOTSTRAP_REF=1 bash scripts/bootstrap <branch-or-tag>
+#   curl -fsSL https://raw.githubusercontent.com/neoslusion/dotfiles/main/scripts/bootstrap | bash -s -- <commit-sha>
+#
+# Env: DOTFILES_DEST overrides the checkout location (default ~/sandboxes/dotfiles).
+# DOTFILES_ALLOW_MOVING_BOOTSTRAP_REF=1 explicitly permits a moving branch or tag.
+# The installer runs afterwards; re-run bootstrap is a no-op when the checkout exists.
+set -euo pipefail
+
+REPO_URL="https://github.com/neoslusion/dotfiles.git"
+DEST="${DOTFILES_DEST:-$HOME/sandboxes/dotfiles}"
+REF="${1:-}"
+
+if [ -d "$DEST" ]; then
+    echo "bootstrap: checkout already exists: $DEST"
+    echo "          reapply configs with: cd $DEST && ./install.sh --config"
+    exit 0
+fi
+
+if [ -z "$REF" ]; then
+    echo "bootstrap: a 40-character commit SHA is required" >&2
+    echo "          usage: bash scripts/bootstrap <commit-sha>" >&2
+    echo "          moving refs require DOTFILES_ALLOW_MOVING_BOOTSTRAP_REF=1" >&2
+    exit 1
+fi
+
+if ! [[ "$REF" =~ ^[0-9a-fA-F]{40}$ ]] && [ "${DOTFILES_ALLOW_MOVING_BOOTSTRAP_REF:-0}" != "1" ]; then
+    echo "bootstrap: refusing moving ref '$REF'" >&2
+    echo "          pass a 40-character commit SHA, or set DOTFILES_ALLOW_MOVING_BOOTSTRAP_REF=1 to allow branches and tags" >&2
+    exit 1
+fi
+
+command -v git >/dev/null 2>&1 || { echo "bootstrap: git is required" >&2; exit 1; }
+
+mkdir -p "$(dirname "$DEST")"
+echo "bootstrap: cloning $REPO_URL at $REF -> $DEST"
+if [[ "$REF" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    git init -q "$DEST"
+    git -C "$DEST" remote add origin "$REPO_URL"
+    git -C "$DEST" fetch -q --depth 1 origin "$REF"
+    git -C "$DEST" checkout -q FETCH_HEAD
+else
+    git clone -q --depth 1 --branch "$REF" "$REPO_URL" "$DEST"
+fi
+
+[ -f "$DEST/install.sh" ] || { echo "bootstrap: clone did not contain install.sh" >&2; exit 1; }
+echo "bootstrap: running installer"
+exec "$DEST/install.sh"

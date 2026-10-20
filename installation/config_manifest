@@ -1,0 +1,45 @@
+# Deployable config modules — single source of truth shared by
+# install_configs.sh (what gets copied into ~/.config) and doctor.sh (what
+# the health check expects to exist).
+#
+# Schema (whitespace-separated):
+#   name      top-level directory under config/
+#   tier      core      deployed by every install/refresh
+#             internal  NOT a ~/.config module — deployed by a dedicated step
+#                       (kept here so tests/install_policy_test.sh can require
+#                       every config/ directory to be declared)
+#   mode      copy      refresh when changed; previous deploy kept as <dest>.bak
+#             seed      create only if missing — the tool owns the file at runtime
+#             -         (internal entries: no mode)
+#   sentinel  seed only: file whose presence marks the module as already
+#             seeded; "-" means "just check the module directory"
+#
+# Adding a tool: drop its directory into config/ and add ONE line here.
+# tests/install_policy_test.sh fails while a config/ directory is undeclared
+# or a manifest entry points at a missing directory.
+
+atuin             core    copy
+bottom            core    copy
+lazygit           core    copy
+nvim              core    copy
+# herdr's config.toml is runtime-managed (the Settings TUI writes back into
+# it); an installer overwrite would clobber user state, so seed only.
+herdr             core    seed    config.toml
+
+# Not ~/.config modules — each is deployed by a dedicated installer step:
+#   agents/       shared agent canon            (install_agent_configs)
+#   claude/       agent home                    (install_agent_configs)
+#   codex/        agent home                    (install_agent_configs)
+#   antigravity/  agent home                    (install_agent_configs)
+#   opencode/     agent home                    (install_agent_configs)
+#   sketchybar/   macOS bar                     (installation/install_bars.sh)
+#   terminal/     zsh files                     (install_shell_configs)
+#   tmux/         tmux files                    (install_tmux_config)
+agents            internal  -
+antigravity       internal  -
+claude            internal  -
+codex             internal  -
+opencode          internal  -
+sketchybar        internal  -
+terminal          internal  -
+tmux              internal  -

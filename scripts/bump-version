@@ -1,0 +1,206 @@
+#!/bin/bash
+# bump-version — update one tool's version + SHA256 pins in installation/versions.env.
+# Fetches the latest release from GitHub (or uses the version you give),
+# downloads each pinned asset, hashes it, and rewrites the pin lines.
+#
+# Usage: scripts/bump-version TOOL [VERSION] [--dry-run]
+#        scripts/bump-version --check
+#        scripts/bump-version --list
+#   TOOL: any name from --list (rows of installation/release_assets)
+#   VERSION: optional exact version WITHOUT tag prefix (default: latest tag)
+#   --dry-run: resolve + compare only; no downloads, no edits
+#   --check: report every tool's drift (read-only; used by the drift workflow)
+#
+# One tool at a time on purpose: each bump gets integrated and tested on its
+# own, so a breaking release stays bisectable.
+#
+# Environment:
+#   GITHUB_TOKEN          optional; sent as a Bearer token to api.github.com
+#                         (raises the rate limit; the drift workflow sets it)
+#   DOTFILES_VERSIONS_ENV override path to the pins file (used by tests)
+#
+# Test seams (unset in real use; see tests/bump_version_test.sh):
+#   DOTFILES_BUMP_TEST_API_DIR    serve releases/latest JSON from files
+#                                 <dir>/<repo-with-slashes-as-__>.json
+#                                 instead of hitting api.github.com
+#   DOTFILES_BUMP_TEST_ASSETS     don't download assets; hash the asset URL
+#                                 string itself as a deterministic body
+#   DOTFILES_BUMP_TEST_FAIL_ASSET substring: make matching downloads fail
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${DOTFILES_VERSIONS_ENV:-$ROOT/installation/versions.env}"
+ASSETS_FILE="$ROOT/installation/release_assets"
+
+# Tool metadata lives in installation/release_assets (format documented there)
+# so installers download exactly the assets whose hashes are pinned here.
+tool_info() { # prints repo|tag-prefix|version-var|asset1|sha-var1|asset2|sha-var2|pin-style
+    awk -F'|' -v t="$1" '$1 == t { sub(/^[^|]*[|]/, ""); print; exit }' "$ASSETS_FILE"
+}
+
+tool_list() {
+    awk -F'|' '!/^#/ && NF { print $1 }' "$ASSETS_FILE"
+}
+
+usage() {
+    sed -n '2,/^[^#]/p' "$0" | sed '$d; s/^# \{0,1\}//' >&2
+    exit 2
+}
+
+# Print the current default value of a pin var, or nothing if absent.
+# Glob matching, not ERE: [[ =~ ]] with escaped-brace patterns behaves
+# inconsistently across readline/regex builds (verified broken on MSYS2).
+read_pin() {
+    local head="$1=\"\${$1:-" l rest out=""
+    while IFS= read -r l || [ -n "$l" ]; do
+        [[ "$l" == "$head"*\"* ]] || continue
+        rest="${l#"$head"}"
+        out="${rest%%\"*}"
+        out="${out%\}}"
+    done < "$ENV_FILE"
+    printf '%s' "$out"
+}
+
+# Rewrite a pin line's default value and verify the write landed.
+set_pin() { # set_pin <var> <value>
+    # Temp file, not sed -i: BSD sed (macOS) has no suffix-less in-place form.
+    sed -E "s|^($1=\"\\\$\{$1:-)[^}]*(\}\")\$|\1$2\2|" "$ENV_FILE" > "$ENV_FILE.tmp" \
+        && mv "$ENV_FILE.tmp" "$ENV_FILE"
+    [ "$(read_pin "$1")" = "$2" ]
+}
+
+latest_version() { # latest_version <repo> <tag-prefix> -> prefix-stripped
+    local json rest tag
+    if [ -n "${DOTFILES_BUMP_TEST_API_DIR:-}" ]; then
+        json="$(cat "${DOTFILES_BUMP_TEST_API_DIR}/${1//\//__}.json")" || return 1
+    elif [ -n "${GITHUB_TOKEN:-}" ]; then
+        json="$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+            "https://api.github.com/repos/$1/releases/latest")" || return 1
+    else
+        json="$(curl -fsSL "https://api.github.com/repos/$1/releases/latest")" || return 1
+    fi
+    # Tolerate both `{"tag_name": "x"}` and `{"tag_name":"x"}`.
+    rest="${json#*\"tag_name\":}"
+    rest="${rest#"${rest%%[![:space:]]*}"}"
+    rest="${rest#\"}"
+    tag="${rest%%\"*}"
+    [ -n "$tag" ] || return 1
+    printf '%s' "${tag#$2}"
+}
+
+asset_sha() { # asset_sha <url> -> sha256 of the downloaded asset
+    local tmp sha
+    tmp="$(mktemp)"
+    if [ -n "${DOTFILES_BUMP_TEST_ASSETS:-}" ]; then
+        if [ -n "${DOTFILES_BUMP_TEST_FAIL_ASSET:-}" ] && [[ "$1" == *"$DOTFILES_BUMP_TEST_FAIL_ASSET"* ]]; then
+            rm -f "$tmp"
+            return 1
+        fi
+        printf '%s' "$1" > "$tmp"
+    elif ! curl -fsSL "$1" -o "$tmp"; then
+        rm -f "$tmp"
+        return 1
+    fi
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha="$(sha256sum "$tmp")"
+    else
+        sha="$(shasum -a 256 "$tmp")"
+    fi
+    rm -f "$tmp"
+    printf '%s' "${sha%% *}"
+}
+
+# Resolve TOOL's target pin. Sets: REPO PREFIX VER_VAR A1 S1 A2 S2 STYLE
+# CURRENT VER TAG NEW. Returns 1 (with a message) on any resolution failure.
+resolve() { # resolve <tool> <explicit-version-or-empty>
+    local meta
+    meta="$(tool_info "$1")"
+    [ -n "$meta" ] || { echo "bump-version: unknown tool '$1'" >&2; return 1; }
+    IFS='|' read -r REPO PREFIX VER_VAR A1 S1 A2 S2 STYLE <<< "$meta"
+    CURRENT="$(read_pin "$VER_VAR")"
+    [ -n "$CURRENT" ] || { echo "bump-version: $1: no pin line for $VER_VAR in $ENV_FILE" >&2; return 1; }
+    if [ -n "$2" ]; then
+        VER="$2"
+    else
+        VER="$(latest_version "$REPO" "$PREFIX")" \
+            || { echo "bump-version: $1: could not resolve latest release for $REPO" >&2; return 1; }
+    fi
+    TAG="$PREFIX$VER"
+    if [ "$STYLE" = "tag" ]; then NEW="$TAG"; else NEW="$VER"; fi
+}
+
+bump() { # bump <tool> <explicit-version-or-empty> <dry:0|1>
+    resolve "$1" "$2" || return 1
+    if [ "$NEW" = "$CURRENT" ]; then
+        echo "$1 already at $CURRENT — nothing to do."
+        return 0
+    fi
+    if [ "$3" = "1" ]; then
+        echo "$1: $CURRENT -> $NEW (dry run)"
+        return 0
+    fi
+    # Hash every asset before touching versions.env, so a failed download never
+    # leaves a half-updated pin set.
+    local url h1 h2=""
+    url="https://github.com/$REPO/releases/download/$TAG/${A1//\{V\}/$VER}"
+    echo "  downloading $url" >&2
+    h1="$(asset_sha "$url")" || { echo "bump-version: $1: download failed: $url" >&2; return 1; }
+    if [ -n "$A2" ]; then
+        url="https://github.com/$REPO/releases/download/$TAG/${A2//\{V\}/$VER}"
+        echo "  downloading $url" >&2
+        h2="$(asset_sha "$url")" || { echo "bump-version: $1: download failed: $url" >&2; return 1; }
+    fi
+    set_pin "$S1" "$h1" || { echo "bump-version: $1: failed to rewrite $S1" >&2; return 1; }
+    if [ -n "$A2" ]; then
+        set_pin "$S2" "$h2" || { echo "bump-version: $1: failed to rewrite $S2" >&2; return 1; }
+    fi
+    set_pin "$VER_VAR" "$NEW" || { echo "bump-version: $1: failed to rewrite $VER_VAR" >&2; return 1; }
+    echo "$1: $CURRENT -> $NEW"
+    echo "done. Review: git diff installation/versions.env"
+}
+
+check_all() {
+    local tool drift="" failed=0
+    for tool in $(tool_list); do
+        if ! resolve "$tool" ""; then
+            failed=1
+        elif [ "$NEW" != "$CURRENT" ]; then
+            drift="$drift
+  $tool $CURRENT -> $NEW"
+        fi
+    done
+    if [ -z "$drift" ]; then
+        echo "up to date: nothing to bump"
+    else
+        echo "drifted:$drift"
+    fi
+    return "$failed"
+}
+
+case "${1:-}" in
+    ''|--help|-h) usage ;;
+    --list) tool_list; exit 0 ;;
+    --check) check_all; exit $? ;;
+    --dump-meta)
+        # "<tool>|<meta>" per line: the whole table in one process spawn (tests).
+        awk '!/^#/ && NF' "$ASSETS_FILE"
+        exit 0
+        ;;
+    -*) usage ;;
+esac
+
+TOOL="$1"
+shift
+DRY=0
+VERSION=""
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run) DRY=1 ;;
+        -*) usage ;;
+        *) if [ -z "$VERSION" ]; then VERSION="$arg"; else usage; fi ;;
+    esac
+done
+case "$VERSION" in
+    *[!0-9A-Za-z.\-]*) echo "bump-version: invalid VERSION '$VERSION'" >&2; exit 1 ;;
+esac
+bump "$TOOL" "$VERSION" "$DRY"

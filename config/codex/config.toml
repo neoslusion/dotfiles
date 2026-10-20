@@ -1,0 +1,16 @@
+# Codex seed config — deployed ONLY if ~/.codex/config.toml does not exist.
+# Codex appends [projects."..."] trust entries and availability state at
+# runtime; the installer never overwrites this file once it exists.
+# Auth: run `codex login` (OAuth), or export OPENAI_API_KEY via ~/.secrets.
+model = "gpt-5.6-sol"
+model_reasoning_effort = "medium"
+approvals_reviewer = "user"
+plan_mode_reasoning_effort = "xhigh"
+
+[tui]
+status_line = ["model-with-reasoning", "current-dir"]
+status_line_use_colors = true
+
+[notice]
+hide_rate_limit_model_nudge = true
+hide_full_access_warning = true

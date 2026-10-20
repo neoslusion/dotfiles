@@ -1,0 +1,38 @@
+#!/bin/bash
+# Pre-commit: fast, dependency-free policy checks.
+# Enable with:  git config core.hooksPath .githooks
+set -u
+
+ROOT="$(git rev-parse --show-toplevel)" || exit 1
+fail=0
+
+# Syntax-check every staged shell script
+while IFS= read -r file; do
+    case "$file" in
+        *.sh) ;;
+        *) continue ;;
+    esac
+    if ! bash -n "$ROOT/$file"; then
+        echo "pre-commit: syntax error in $file" >&2
+        fail=1
+    fi
+done < <(git diff --cached --name-only)
+
+# Policy + path tests (fast, no sudo/tmux/docker needed)
+for test in tests/install_policy_test.sh tests/path_policy_test.sh; do
+    if ! bash "$ROOT/$test" >/dev/null 2>&1; then
+        echo "pre-commit: $test failed" >&2
+        echo "           run: bash $test" >&2
+        fail=1
+    fi
+done
+
+# Secrets scan on staged changes (optional: needs gitleaks installed)
+if command -v gitleaks &> /dev/null; then
+    if ! gitleaks protect --staged --no-banner; then
+        echo "pre-commit: gitleaks found secrets in staged changes" >&2
+        fail=1
+    fi
+fi
+
+exit "$fail"

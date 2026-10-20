@@ -1,0 +1,1 @@
+{ "name": "pretty-tools", "version": "0.1.0", "description": "Draws tool-call rows as a status dot, the tool name and a short summary instead of the raw input" }

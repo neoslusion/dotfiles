@@ -1,0 +1,10 @@
+{
+  "env": {
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
+  },
+  "effortLevel": "xhigh",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "switchModelsOnFlag": false,
+  "statusLine": { "type": "command", "command": "\"__PYTHON__\" \"__CLAUDE_STATUSLINE__\"" }
+}

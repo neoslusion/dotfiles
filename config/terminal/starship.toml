@@ -1,0 +1,81 @@
+"$schema" = "https://starship.rs/config-schema.json"
+
+# Robbyrussell-style minimal prompt (the classic Oh My Zsh look, matching
+# the dotbar aesthetic), recolored with the shared Tokyo Night palette:
+#   ➜ dotfiles git:(main) ✗
+format = "$character$directory$git_branch${custom.git_dirty}$git_state$cmd_duration$jobs"
+
+palette = "tokyo_night"
+add_newline = false
+command_timeout = 800
+scan_timeout = 30
+
+[palettes.tokyo_night]
+blue = "#7aa2f7"
+cyan = "#7dcfff"
+green = "#9ece6a"
+yellow = "#e0af68"
+red = "#f7768e"
+purple = "#bb9af7"
+fg = "#c0caf5"
+muted = "#565f89"
+bg = "#24283b"
+black = "#15161e"
+
+[character]
+format = "$symbol "
+success_symbol = "[➜](bold green)"
+error_symbol = "[➜](bold red)"
+vimcmd_symbol = "[❮](bold purple)"
+
+[directory]
+style = "bold cyan"
+format = "[$path]($style) "
+truncation_length = 1
+truncation_symbol = ""
+read_only = " ro"
+
+[git_branch]
+symbol = ""
+style = "bold blue"
+format = "[git:\\(]($style)[$branch](bold red)[\\)]($style) "
+truncation_length = 28
+truncation_symbol = "…"
+
+# Robbyrussell shows one ✗ for any dirty state. Starship's git_status can't
+# collapse its per-state symbols into a single glyph, so a custom module
+# checks porcelain output instead (head -1: cheap even on big repos).
+# Windows skips the check entirely: windows/profile.ps1 sets
+# STARSHIP_GIT_DIRTY_SKIP — NTFS + Defender make each sh/git spawn cost
+# hundreds of ms per prompt, while the ✗ buys nothing on the Windows side.
+# Linux keeps the ✗ (subprocess spawns are cheap there).
+[custom.git_dirty]
+command = "echo ✗"
+when = 'test -z "$STARSHIP_GIT_DIRTY_SKIP" && test -n "$(git status --porcelain --ignore-submodules 2>/dev/null | head -n 1)"'
+require_repo = true
+shell = ["sh"]
+style = "bold yellow"
+format = "[$output]($style) "
+
+[git_state]
+style = "muted"
+format = "[$state( $progress_current/$progress_total)]($style) "
+
+[cmd_duration]
+min_time = 1000
+style = "muted"
+format = "took [$duration]($style) "
+
+[jobs]
+symbol = "+"
+style = "muted"
+format = "[$symbol$number]($style) "
+
+[os]
+disabled = true
+
+[time]
+disabled = true
+
+[username]
+disabled = true

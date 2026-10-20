@@ -1,0 +1,7 @@
+# Deployed by dotfiles to %USERPROFILE%\.wslconfig (seed-if-missing only —
+# your local edits are never overwritten). Takes effect after: wsl --shutdown
+[wsl2]
+# Return cached memory to Windows gradually instead of holding the 50% cap
+autoMemoryReclaim=gradual
+# Let the WSL disk image shrink when files are deleted
+sparseVhd=true

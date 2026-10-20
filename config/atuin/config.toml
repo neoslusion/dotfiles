@@ -1,0 +1,126 @@
+# Atuin Configuration - Better Shell History
+# Magical history search with sync, encryption, and statistics
+
+## Database path
+db_path = "~/.local/share/atuin/history.db"
+
+## Key path (encryption)
+key_path = "~/.local/share/atuin/key"
+
+## Session path
+session_path = "~/.local/share/atuin/session"
+
+## Sync server URL (comment out to disable sync)
+# sync_address = "https://api.atuin.sh"
+
+## Auto sync
+auto_sync = false
+sync_frequency = "0"
+
+## Search mode (prefix, fulltext, fuzzy, skim)
+search_mode = "fuzzy"
+
+## Filter mode
+filter_mode = "global"
+
+## Style (compact, full, auto)
+style = "compact"
+
+## Show preview
+show_preview = true
+
+## Max preview height
+max_preview_height = 4
+
+## Show help
+show_help = true
+
+## Exit mode (return-original, return-query)
+exit_mode = "return-original"
+
+## Word jump mode (emacs, subl)
+word_jump_mode = "emacs"
+
+## Scroll context lines
+scroll_context_lines = 1
+
+## Inline height (0 for full screen). Non-zero renders the history list
+## right below the prompt — parity with PSReadLine's ListView on Windows.
+inline_height = 18
+
+## Show tabs
+show_tabs = true
+
+## Invert
+invert = false
+
+## Case sensitive
+case_sensitive = false
+
+## Word characters
+word_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+## Scroll exit
+scroll_exit = true
+
+## History filter
+# Filter out commands starting with space
+history_filter = [
+    "^\\s",  # Commands starting with space
+]
+
+## Cwd filter - don't save commands from these directories
+# cwd_filter = [
+#     "/tmp",
+# ]
+
+## Update check
+update_check = false
+
+## Dialect (us, uk)
+dialect = "us"
+
+## Enter accept
+enter_accept = true
+
+## Keymap mode (emacs, vim-normal, vim-insert, auto)
+keymap_mode = "emacs"
+
+## Cursor settings - DISABLED to avoid errors across versions
+# [keymap_cursor]
+# emacs = "default"
+# vim_insert = "default"
+# vim_normal = "default"
+
+## Stats
+# Enable command statistics
+[stats]
+common_subcommands = [
+    "git",
+    "docker",
+    "kubectl",
+    "cargo",
+    "npm",
+    "yarn",
+]
+common_prefix = [
+    "sudo",
+]
+
+## Secrets filter - filter out potential secrets
+secrets_filter = true
+
+## Workspaces
+workspaces = false
+
+## Ctrl-n filter
+ctrl_n_shortcuts = false
+
+## Network connect timeout
+network_connect_timeout = 5
+
+## Network timeout
+network_timeout = 5
+
+## Local timeout
+local_timeout = 5

@@ -1,0 +1,20 @@
+{
+  "name": "my-mods",
+  "owner": {
+    "name": "Duc Le"
+  },
+  "plugins": [
+    {
+      "name": "context-meter",
+      "source": "./context-meter"
+    },
+    {
+      "name": "pretty-tools",
+      "source": "./pretty-tools"
+    },
+    {
+      "name": "cache-timer",
+      "source": "./cache-timer"
+    }
+  ]
+}

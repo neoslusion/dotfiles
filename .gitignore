@@ -1,0 +1,27 @@
+# AI command
+GEMINI.md
+CLAUDE.md
+QWEN.md
+.agent/skills
+
+# Windows Python install manager drops a runtime + log into the cwd when it
+# cannot resolve a home dir (e.g. tests that run python3 with a temp HOME).
+/Python/
+/python_install_*.log
+__pycache__/
+
+# Agent credentials & machine state — must NEVER land in this repo
+auth.json
+settings.local.json
+anthropic-key
+/.claude/
+/.codex/
+/.agents/
+.secrets/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+history.jsonl
+
+# Claude Code lays engine-generated type files beside each mod it loads.
+config/claude/mods/*/.claude-plugin/types/

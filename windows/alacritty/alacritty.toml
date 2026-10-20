@@ -1,0 +1,177 @@
+# Alacritty configuration - native Windows, Catppuccin Macchiato outer chrome.
+# Deployed to %APPDATA%\alacritty\alacritty.toml by windows/install.ps1.
+#
+# WHY NOT ~/.config/alacritty/: on Windows Alacritty reads ONLY
+# %APPDATA%\alacritty\alacritty.toml. The XDG paths it uses on Linux and macOS
+# are not consulted at all, so a manifest `copy` entry under config/ would
+# deploy to a path this machine silently ignores. Hence windows/ plus an
+# explicit destination.
+#
+# Deliberately NOT Tokyo Night. This is outer Windows chrome: warm pastel frame
+# outside, solid Tokyo Night tmux strip inside. Two layers, two looks - you always know
+# which layer a bar belongs to.
+#
+# MANAGED FILE: re-running install.ps1 replaces this file and keeps the previous
+# copy as alacritty.toml.bak. Local tweaks will be overwritten; put anything you
+# want to keep in the .bak, or stop running the installer for this file.
+
+[general]
+# Reload on save so colour and font tuning needs no restart. A new shell is
+# still required for anything under [env].
+live_config_reload = true
+
+[terminal]
+# Alacritty's Windows default is plain "powershell", i.e. Windows PowerShell 5.1.
+# This repo is pwsh-7-only and never runs WinPS 5.1 - see the PSModulePath
+# isolation in windows/profile.ps1 for what a 5.1 child does when it inherits
+# PS7 state. Be explicit rather than inheriting the default.
+shell = { program = "pwsh", args = ["-NoLogo"] }
+# OnlyCopy: never let a remote application write the local clipboard.
+osc52 = "OnlyCopy"
+
+[window]
+padding = { x = 8, y = 10 }
+# Fixed padding; dynamic padding would spread the margin instead.
+dynamic_padding = false
+# Alacritty's Windows default is already "Full"; Transparent and Buttonless are
+# macOS-only per the config docs, so there is nothing to opt into on this side.
+decorations = "Full"
+# Opaque on purpose: translucency on Windows costs a compositor re-blur every
+# frame. Flip to 0.95
+# if you want the frosted look and can afford it.
+opacity = 1.0
+
+[font]
+# Nerd Font, because starship, tmux and the status line all assume powerline and
+# box-drawing glyphs exist. Must stay in step with the other layers.
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
+bold_italic = { family = "JetBrainsMono Nerd Font", style = "Bold Italic" }
+size = 11.5
+# Do NOT let Alacritty use its built-in box-drawing font: it would override the
+# Nerd Font glyphs and break the tmux and status-bar separators.
+builtin_box_drawing = false
+
+[font.offset]
+# Lift the baseline a point so underlines and strikethrough on descenders do not
+# clip against the cell bottom.
+y = 1
+
+[colors]
+# Catppuccin Macchiato. Each value is annotated with its upstream palette key so
+# a future theme swap is a search rather than a guess.
+
+[colors.primary]
+background = "#24273a" # base
+foreground = "#cad3f5" # text
+dim_foreground = "#a5adcb" # subtext0
+
+[colors.cursor]
+text = "#24273a" # base
+cursor = "#f4dbd6" # rosewater
+
+[colors.vi_mode_cursor]
+# Sibling of [colors.cursor], NOT a child of it. Alacritty warns
+# "Unused config key: vi_mode_cursor" for the nested spelling.
+text = "#24273a" # base
+cursor = "#f5bde6" # pink
+
+[colors.selection]
+text = "#24273a" # base
+background = "#5b6078" # surface2
+
+[colors.search]
+matches = { foreground = "#24273a", background = "#eed49f" } # yellow
+focused_match = { foreground = "#24273a", background = "#f5a97f" } # peach
+
+[colors.hints]
+start = { foreground = "#24273a", background = "#b7bdf8" } # lavender
+end = { foreground = "#24273a", background = "#8aadf4" } # blue
+
+[colors.line_indicator]
+foreground = "#24273a" # base
+background = "#f5bde6" # pink
+
+[colors.footer_bar]
+foreground = "#24273a" # base
+background = "#a5adcb" # subtext0
+
+[colors.normal]
+black = "#181926" # crust
+red = "#ed8796" # red
+green = "#a6da95" # green
+yellow = "#eed49f" # yellow
+blue = "#8aadf4" # blue
+magenta = "#f5bde6" # pink
+cyan = "#8bd5ca" # teal
+white = "#b8c0e0" # subtext1
+
+[colors.bright]
+black = "#6e738d" # overlay0
+red = "#ed8796" # red
+green = "#a6da95" # green
+yellow = "#eed49f" # yellow
+blue = "#8aadf4" # blue
+magenta = "#f5bde6" # pink
+cyan = "#8bd5ca" # teal
+white = "#cad3f5" # text
+
+[colors.dim]
+black = "#181926" # crust
+red = "#ee99a0" # maroon
+green = "#a6da95" # green
+yellow = "#eed49f" # yellow
+blue = "#8aadf4" # blue
+magenta = "#f5bde6" # pink
+cyan = "#8bd5ca" # teal
+white = "#a5adcb" # subtext0
+
+[cursor]
+# The visual bell flashes at the cursor colour, so keep the cursor the
+# brightest thing on screen for the flash to land on.
+style = { shape = "Block", blinking = "On" }
+vi_mode_style = { shape = "Beam", blinking = "On" }
+unfocused_hollow = true
+thickness = 1.0
+
+[bell]
+# Audible bell off, quick visual flash at the cursor colour. Alacritty's bell
+# accepts hex only and hard-errors on a symbolic value, so rosewater is spelled
+# out.
+animation = "EaseOut"
+duration = 75
+color = "#f4dbd6" # rosewater - same value as [colors.cursor] cursor
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[selection]
+# Windows has no primary selection, so a copy must land on the real clipboard or
+# neither win32yank nor the WSL side will ever see it.
+save_to_clipboard = true
+
+[mouse]
+hide_when_typing = true
+
+# No custom key bindings on purpose. KEYBINDINGS.md gives Alt+hjkl to herdr, tmux
+# and Neovim, and a terminal-level Alt binding would shadow them on the way up.
+# Alacritty's defaults leave Alt alone, which is what the three-layer doctrine
+# needs.
+
+[[hints.enabled]]
+# Ctrl+Shift+O opens a URL under the cursor; `cmd /c start` is the Windows
+# command from Alacritty's own configuration docs. Left-click also works.
+command = { program = "cmd", args = ["/c", "start", ""] }
+hyperlinks = true
+post_processing = true
+persist = false
+mouse.enabled = true
+binding = { key = "O", mods = "Control|Shift" }
+# Single-quoted TOML literal string: no escape processing at all, so the regex
+# metacharacters below stay literal and the file always parses. Written by hand
+# rather than copied from the docs because the docs' basic-string form contains
+# a \s escape that is invalid TOML and would stop Alacritty loading the file.
+# The character class excludes whitespace, so URLs still terminate correctly.
+regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https?://|file:|git://|ssh:|ftp://)[A-Za-z0-9._~:/?#@!$&*+,;=%()-]+'

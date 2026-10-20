@@ -1,0 +1,53 @@
+#!/bin/bash
+# sync-nvim-locks — snapshot the live Neovim lockfiles into the repo so
+# plugin and LSP-server versions stay pinned and reviewable (the nvim
+# config deploys by copy, so the live locks live outside the repo).
+#
+# Usage: scripts/sync-nvim-locks [--restore]
+#   (default)  copy live locks into config/nvim/ (run after :Lazy update
+#              and :MasonUpdate, then commit the snapshot)
+#   --restore  copy repo locks back to the live locations (fresh machine,
+#              before :Lazy restore; Mason pins its packages from the lock)
+#
+# Sources (live) -> targets (repo), and the reverse for --restore:
+#   lazy-lock.json   ~/.config/nvim/lazy-lock.json
+#   mason-lock.json  ~/.local/share/nvim/mason-lock.json
+#                    Windows: %LOCALAPPDATA%\nvim-data\mason-lock.json
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_NVIM="$ROOT/config/nvim"
+
+CONFIG_NVIM="${XDG_CONFIG_HOME:-$HOME/.config}/nvim"
+if [ -n "${LOCALAPPDATA:-}" ]; then
+    DATA_NVIM="$LOCALAPPDATA/nvim-data"
+else
+    DATA_NVIM="${XDG_DATA_HOME:-$HOME/.local/share}/nvim"
+fi
+
+RESTORE=0
+case "${1:-}" in
+    --restore) RESTORE=1 ;;
+    "") ;;
+    *) echo "sync-nvim-locks: usage: scripts/sync-nvim-locks [--restore]" >&2; exit 2 ;;
+esac
+
+copy_lock() { # copy_lock <label> <from> <to>
+    if [ ! -f "$2" ]; then
+        echo "skip $1: $2 not found"
+        return 0
+    fi
+    mkdir -p "$(dirname "$3")"
+    cp -f "$2" "$3"
+    echo "ok $1 -> $3"
+}
+
+if [ "$RESTORE" -eq 1 ]; then
+    copy_lock "lazy-lock" "$REPO_NVIM/lazy-lock.json" "$CONFIG_NVIM/lazy-lock.json"
+    copy_lock "mason-lock" "$REPO_NVIM/mason-lock.json" "$DATA_NVIM/mason-lock.json"
+    echo "done. In Neovim run :Lazy restore and :MasonInstallAll to finish."
+else
+    copy_lock "lazy-lock" "$CONFIG_NVIM/lazy-lock.json" "$REPO_NVIM/lazy-lock.json"
+    copy_lock "mason-lock" "$DATA_NVIM/mason-lock.json" "$REPO_NVIM/mason-lock.json"
+    echo "done. Review and commit the lockfile snapshot."
+fi

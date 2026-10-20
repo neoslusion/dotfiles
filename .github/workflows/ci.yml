@@ -1,0 +1,91 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# Private repo: checkout needs contents, and paths-filter + gitleaks list the
+# PR's files/commits through the API, which needs pull-requests.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  bash-tests:
+    name: bash suites (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Install test deps
+        run: |
+          sudo apt-get update -qq
+          # ripgrep is not optional: install_policy_test.sh gates floating
+          # installs with `rg`, and a missing rg makes those gates pass
+          # vacuously instead of failing.
+          # zsh: shell_config_test.sh loads the zsh configs.
+          sudo apt-get install -y -qq tmux python3 shellcheck ripgrep zsh
+      - name: Shellcheck
+        run: |
+          git ls-files -z '*.sh' '*.bash' | xargs -0 shellcheck -S warning
+          shellcheck -S warning scripts/audit-nvim-keymaps scripts/bump-version scripts/dotsync \
+            scripts/sys-info
+      - name: Run local test suites
+        run: bash tests/run_all.sh
+
+  macos:
+    name: bash suites (macos)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Install test deps
+        # Deliberately no Homebrew bash: install.sh runs under the stock
+        # /bin/bash 3.2 on a real Mac, so the suites must too. coreutils only
+        # supplies sha256sum for the test fixtures (the installer uses shasum).
+        run: brew install tmux ripgrep coreutils
+      - name: Run local test suites
+        run: /bin/bash tests/run_all.sh
+
+  secrets-scan:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  distro-smoke:
+    name: distro smoke (docker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: dorny/paths-filter@0e4a8c6effa4802afeda77dc8d303f8176d7dfad # v3.0.4
+        id: filter
+        with:
+          filters: |
+            installer:
+              - 'installation/**'
+              - 'install.sh'
+              - 'tests/distro_smoke.sh'
+      - name: Run distro smoke
+        if: steps.filter.outputs.installer == 'true' || github.event_name == 'workflow_dispatch'
+        run: bash tests/distro_smoke.sh
+
+  windows:
+    name: windows checks (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Preflight (BOM/CRLF/ASCII + installer source-existence)
+        shell: pwsh
+        run: pwsh -NoProfile -File tests/windows_preflight.ps1
+      - name: Staged installer dry run
+        shell: pwsh
+        run: pwsh -NoProfile -File tests/windows_dryrun_test.ps1
+      - name: Profile launcher arguments
+        shell: pwsh
+        run: pwsh -NoProfile -File tests/windows_profile_test.ps1

@@ -1,0 +1,27 @@
+#!/bin/bash
+# config/sketchybar/sketchybarrc
+# Standard Tokyo Night colors
+BG=0xff1a1b26
+FG=0xffc0caf5
+BLUE=0xff7aa2f7
+CYAN=0xff7dcfff
+GREEN=0xff9ece6a
+PURPLE=0xffbb9af7
+MUTED=0xff24283b
+
+sketchybar --bar height=32 color=$BG border_width=1 border_color=$MUTED
+
+# CPU Module
+sketchybar --add item cpu right \
+           --set cpu update_freq=2 script='sketchybar --set "$NAME" label="$($HOME/.local/bin/sys-info | cut -d "|" -f1)"' \
+           --set cpu icon=󰻠 icon.color=$GREEN label.color=$FG
+
+# RAM Module
+sketchybar --add item ram right \
+           --set ram update_freq=2 script='sketchybar --set "$NAME" label="$($HOME/.local/bin/sys-info | cut -d "|" -f2)"' \
+           --set ram icon=󰍛 icon.color=$PURPLE label.color=$FG
+
+# Clock Module
+sketchybar --add item clock right \
+           --set clock update_freq=10 icon=󰥔 icon.color=$BLUE label.color=$FG \
+           --set clock script='sketchybar --set $NAME label="$(date "+%H:%M")"'

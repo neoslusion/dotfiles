@@ -1,0 +1,32 @@
+#!/bin/bash
+# scripts/sys-info - Standardized metric provider
+# Use absolute path for reliability in tmux/bar calls
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/utils/env.sh"
+
+get_cpu() {
+    if is_macos; then
+        # On Mac, top -l 1 gives a snapshot. We extract the user + sys usage.
+        top -l 1 | grep "CPU usage" | awk '{print $3}' | tr -d '%'
+    else
+        # Linux: fast top snapshot; -bn1 -d0.1 gives a near-instant reading
+        top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1}'
+    fi
+}
+
+get_ram() {
+    if is_macos; then
+        # vm_stat to GB conversion
+        vm_stat | perl -ne '/page size of (\d+) bytes/ and $s=$1; /Pages free:\s+(\d+)/ and $f=$1; /Pages active:\s+(\d+)/ and $a=$1; END { printf "%.1f", ($a*$s)/1024/1024/1024 }'
+    else
+        # Linux: use free -m and format to GB with one decimal
+        free -m | awk '/Mem:/ {printf "%.1f", $3/1024}'
+    fi
+}
+
+# Allow requesting a specific metric
+case "$1" in
+    cpu) get_cpu ;;
+    ram) get_ram ;;
+    *) echo "$(get_cpu)% | $(get_ram)G" ;;
+esac

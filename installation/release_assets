@@ -1,0 +1,25 @@
+# Release-asset table shared by the installers (release_asset in utils.sh) and
+# scripts/bump-version, so the asset an installer downloads is always the asset
+# whose SHA256 was pinned. Line order is bump-version's --check order.
+#
+# tool|repo|tag-prefix|version-var|x86_64-asset|x86_64-sha-var|arm64-asset|arm64-sha-var|pin-style
+#   assets use {V} for the version pin; an empty arm64 pair = x86_64 only
+#   pin-style: empty = store the tag with its prefix stripped
+#              tag   = store the full tag INCLUDING the prefix
+#
+# pin-style MUST match how installers consume the var: consumers that build
+# "v${VAR}" URLs want bare pins; consumers that interpolate "${VAR}" raw into a
+# releases/download/<tag>/ URL want the prefix kept (nvim, herdr). Getting this
+# wrong breaks the next install with a 404.
+nvim|neovim/neovim|v|DOTFILES_NEOVIM_VERSION|nvim-linux-x86_64.tar.gz|DOTFILES_NEOVIM_LINUX_X86_64_SHA256|nvim-linux-arm64.tar.gz|DOTFILES_NEOVIM_LINUX_ARM64_SHA256|tag
+tree-sitter|tree-sitter/tree-sitter|v|DOTFILES_TREE_SITTER_VERSION|tree-sitter-linux-x64.gz|DOTFILES_TREE_SITTER_LINUX_X64_SHA256|tree-sitter-linux-arm64.gz|DOTFILES_TREE_SITTER_LINUX_ARM64_SHA256|
+lazygit|jesseduffield/lazygit|v|DOTFILES_LAZYGIT_VERSION|lazygit_{V}_linux_x86_64.tar.gz|DOTFILES_LAZYGIT_LINUX_X86_64_SHA256|lazygit_{V}_linux_arm64.tar.gz|DOTFILES_LAZYGIT_LINUX_ARM64_SHA256|
+bottom|ClementTsang/bottom||DOTFILES_BOTTOM_VERSION|bottom_x86_64-unknown-linux-musl.tar.gz|DOTFILES_BOTTOM_LINUX_MUSL_X86_64_SHA256|bottom_aarch64-unknown-linux-musl.tar.gz|DOTFILES_BOTTOM_LINUX_MUSL_ARM64_SHA256|
+eza|eza-community/eza|v|DOTFILES_EZA_VERSION|eza_x86_64-unknown-linux-gnu.tar.gz|DOTFILES_EZA_LINUX_GNU_X86_64_SHA256|eza_aarch64-unknown-linux-gnu.tar.gz|DOTFILES_EZA_LINUX_GNU_ARM64_SHA256|
+starship|starship/starship|v|DOTFILES_STARSHIP_VERSION|starship-x86_64-unknown-linux-musl.tar.gz|DOTFILES_STARSHIP_LINUX_MUSL_X86_64_SHA256|starship-aarch64-unknown-linux-musl.tar.gz|DOTFILES_STARSHIP_LINUX_MUSL_ARM64_SHA256|
+atuin|atuinsh/atuin|v|DOTFILES_ATUIN_VERSION|atuin-x86_64-unknown-linux-musl.tar.gz|DOTFILES_ATUIN_LINUX_MUSL_X86_64_SHA256|atuin-aarch64-unknown-linux-musl.tar.gz|DOTFILES_ATUIN_LINUX_MUSL_ARM64_SHA256|
+delta|dandavison/delta||DOTFILES_DELTA_VERSION|delta-{V}-x86_64-unknown-linux-musl.tar.gz|DOTFILES_DELTA_LINUX_MUSL_X86_64_SHA256|delta-{V}-aarch64-unknown-linux-gnu.tar.gz|DOTFILES_DELTA_LINUX_GNU_ARM64_SHA256|
+yazi|sxyazi/yazi|v|DOTFILES_YAZI_VERSION|yazi-x86_64-unknown-linux-musl.zip|DOTFILES_YAZI_LINUX_MUSL_X86_64_SHA256|yazi-aarch64-unknown-linux-musl.zip|DOTFILES_YAZI_LINUX_MUSL_ARM64_SHA256|
+herdr|herdrdev/herdr|v|DOTFILES_HERDR_VERSION|herdr-linux-x86_64|DOTFILES_HERDR_LINUX_X86_64_SHA256|herdr-linux-aarch64|DOTFILES_HERDR_LINUX_ARM64_SHA256|tag
+font|ryanoasis/nerd-fonts|v|DOTFILES_JETBRAINS_MONO_VERSION|JetBrainsMono.zip|DOTFILES_JETBRAINS_MONO_SHA256|||
+zoxide|ajeetdsouza/zoxide|v|DOTFILES_ZOXIDE_VERSION|zoxide-{V}-x86_64-unknown-linux-musl.tar.gz|DOTFILES_ZOXIDE_LINUX_MUSL_X86_64_SHA256|zoxide-{V}-aarch64-unknown-linux-musl.tar.gz|DOTFILES_ZOXIDE_LINUX_MUSL_ARM64_SHA256|

@@ -1,0 +1,63 @@
+# Weekly version-drift REPORT. Only *detects* stale pins (`bump-version
+# --check`) and upserts a tracking issue — it never pushes code. Updating is a
+# deliberate act: `scripts/bump-version <tool>`, one tool at a time.
+# Windows winget pins (windows/install.ps1 $WingetPins) are out of scope;
+# bump them deliberately per AGENTS.md.
+name: drift
+
+on:
+  schedule:
+    - cron: "17 4 * * 1" # Mondays 04:17 UTC
+  workflow_dispatch:
+
+permissions: {} # jobs grant their own; default is nothing
+
+concurrency:
+  group: drift
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: weekly drift report (no code changes)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # private repo: checkout fails without it
+      issues: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Drift check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # raises API rate limit
+        run: |
+          # No tee pipelines: a masked failure here would fake an empty report.
+          bash scripts/bump-version --check > drift-report.txt 2>&1 || rc=$?
+          cat drift-report.txt
+          {
+            echo "## Pinned tool drift"
+            echo ""
+            echo '```'
+            cat drift-report.txt
+            echo '```'
+            echo ""
+            echo "_Updating is deliberate: \`scripts/bump-version <tool>\` per tool._"
+          } > issue-body.md
+          exit "${rc:-0}"
+
+      - name: Upsert tracking issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if grep -q "nothing to bump" drift-report.txt; then
+            echo "No drift."
+            exit 0
+          fi
+          title="Pinned tool drift report"
+          num="$(gh issue list \
+            --search "$title in:title" --state open --json number --jq '.[0].number')"
+          if [ -n "$num" ]; then
+            gh issue edit "$num" --title "$title" --body-file issue-body.md
+          else
+            gh issue create --title "$title" --body-file issue-body.md
+          fi
+

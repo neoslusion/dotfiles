@@ -1,0 +1,70 @@
+# Herdr seed config — deployed ONLY if the live config.toml does not exist
+# (Linux: ~/.config/herdr/config.toml; Windows: %APPDATA%\herdr\config.toml).
+# herdr Settings TUI writes back into config.toml at runtime; the installer
+# never overwrites it once present.
+#
+# Minimal on purpose: herdr works with no config at all. The seed sets only
+# the Tokyo Night theme and skips the first-run onboarding flow.
+#
+# KEYBINDING GOTCHAS (the array bug burned us once):
+# - Every keys.* field takes a SINGLE string ("alt+h"), never an array.
+#   Arrays fail herdr's keybinding type and the [keys] table is dropped
+#   wholesale — symptoms: chords silently dead, only ctrl+b defaults work.
+# - Direct alt chords steal those keys from apps inside panes. That is the
+#   doctrine here (Alt belongs to the focused muxer, same as tmux); nvim
+#   uses hjkl/arrows-free motion and stock ctrl+w splits, so nothing
+#   legitimate collides.
+# - Unlisted actions keep their ctrl+b defaults; `prefix+?` shows what is
+#   actually active. `herdr config reset-keys` restores defaults if this
+#   table ever goes sideways.
+onboarding = false
+
+[terminal]
+# Let Herdr choose the host shell: $SHELL on Unix/WSL, PowerShell on Windows.
+# A shared "pwsh" override prevents WSL panes from spawning without Linux pwsh.
+default_shell = ""
+
+[theme]
+name = "tokyo-night"
+# Built-in (17 themes ship with herdr; names flexible: tokyo-night works as-is).
+# Light/dark siblings are built in too; uncomment to follow the host terminal's
+# appearance switch (manually picking a theme in Settings disables auto_switch):
+# auto_switch = true
+# light_name = "tokyo-night-day"
+
+# Layer doctrine: the terminal keeps only its stock Ctrl+Shift chords, herdr owns
+# pane/tab control via direct alt chords, shell/nvim own everything else.
+# One binding per action: the daily driver is the alt chord; prefix mode
+# (ctrl+b) still reaches every unlisted action at its default.
+# Split letters match tmux (M-n/M--):
+# n = side-by-side, minus = stacked.
+[keys]
+focus_pane_left  = "alt+h"
+focus_pane_down  = "alt+j"
+focus_pane_up    = "alt+k"
+focus_pane_right = "alt+l"
+split_vertical   = "alt+n"     # split right (side-by-side)
+split_horizontal = "alt+minus" # split down (stacked)
+zoom             = "alt+z"
+close_pane       = "alt+q"
+new_tab          = "alt+t"
+workspace_picker = "alt+w"
+next_tab         = "alt+]"
+previous_tab     = "alt+["
+switch_tab       = "alt+1..9"
+toggle_sidebar   = "alt+b"
+
+# Modal popups: Alt+g or prefix+alt+g opens lazygit in a floating session popup
+[[keys.command]]
+key = "alt+g"
+type = "popup"
+command = "lazygit"
+width = "85%"
+height = "85%"
+
+[[keys.command]]
+key = "prefix+alt+g"
+type = "popup"
+command = "lazygit"
+width = "85%"
+height = "85%"
