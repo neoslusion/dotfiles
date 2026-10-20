@@ -44,6 +44,11 @@ mkdir -p "$TMP_DIR/home/.claude"
 cp "$ROOT/tests/fixtures/claude_settings_live.json" "$TMP_DIR/home/.claude/settings.json"
 printf '@RTK.md\n' > "$TMP_DIR/home/.claude/CLAUDE.md"
 printf '@RTK.md\n' > "$TMP_DIR/home/.codex/AGENTS.md"
+# Antigravity writes its own keys into settings.json; an existing install
+# may still carry a stale statusline command.
+mkdir -p "$TMP_DIR/home/.gemini/antigravity-cli"
+printf '{"model": "kept", "statusLine": {"type": "command", "command": "python old.py", "enabled": true}}\n' \
+    > "$TMP_DIR/home/.gemini/antigravity-cli/settings.json"
 
 # User-managed instructions, commands, and skills must survive both installs.
 printf 'user-managed content\n' > "$TMP_DIR/unmanaged.md"
@@ -87,6 +92,16 @@ fi
 
 if [[ ! -f "$TMP_DIR/home/.gemini/antigravity-cli/AGENTS.md" ]]; then
     printf "Expected Antigravity agent configs to be deployed.\n" >&2
+    exit 1
+fi
+if ! python3 - "$TMP_DIR/home/.gemini/antigravity-cli/settings.json" <<'EOF'
+import json, sys
+s = json.load(open(sys.argv[1], encoding="utf-8"))
+assert s["model"] == "kept", "foreign key dropped"
+assert s["statusLine"]["command"].endswith('/.gemini/antigravity-cli/statusline.py') and '"' not in s["statusLine"]["command"], "stale statusLine kept"
+EOF
+then
+    printf 'Expected Antigravity settings.json to keep its keys and get the current statusLine.\n' >&2
     exit 1
 fi
 

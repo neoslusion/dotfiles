@@ -1,7 +1,7 @@
 {
   "statusLine": {
     "type": "command",
-    "command": "\"__PYTHON__\" \"__AGY_STATUSLINE__\"",
+    "command": "__PYTHON__ __AGY_STATUSLINE__",
     "enabled": true
   }
 }

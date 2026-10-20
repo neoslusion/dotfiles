@@ -504,34 +504,36 @@ function Merge-JsonObject($Target, $Source) {
         }
     }
 }
-$claudeSettings = Join-Path $claudeDir "settings.json"
+function Merge-SettingsFile($label, $path, $repoText) {
+    $liveSettings = $null
+    $liveText = $null
+    if (Test-Path $path) {
+        $liveText = [IO.File]::ReadAllText($path)
+        try { $liveSettings = $liveText | ConvertFrom-Json } catch { $liveSettings = $null }
+    }
+    if ($liveSettings -is [Management.Automation.PSCustomObject]) {
+        $beforeMerge = $liveSettings | ConvertTo-Json -Depth 100
+        Merge-JsonObject $liveSettings ($repoText | ConvertFrom-Json)
+        $afterMerge = $liveSettings | ConvertTo-Json -Depth 100
+        # Compare content, not text: Claude rewrites the file in its own JSON style,
+        # so a text compare would rewrite it (and leave a .bak) on every run.
+        $mergedText = if ($afterMerge -ceq $beforeMerge) { $liveText } else { $afterMerge + "`n" }
+    }
+    else {
+        $mergedText = $repoText
+    }
+    if ($mergedText -cne $liveText) {
+        if ($null -ne $liveText) { Copy-Item $path "$path.bak" -Force }
+        [IO.File]::WriteAllText($path, $mergedText, $utf8NoBom)
+        Write-Ok "$label (merged, statusline: $pythonPath)"
+    }
+    else {
+        Write-Skip $label "up to date"
+    }
+}
 $repoSettings = [IO.File]::ReadAllText((Join-Path $RepoRoot "config\claude\settings.json"))
 $repoSettings = $repoSettings.Replace('__PYTHON__', $pythonPath).Replace('__CLAUDE_STATUSLINE__', $statuslinePath)
-$liveSettings = $null
-$liveText = $null
-if (Test-Path $claudeSettings) {
-    $liveText = [IO.File]::ReadAllText($claudeSettings)
-    try { $liveSettings = $liveText | ConvertFrom-Json } catch { $liveSettings = $null }
-}
-if ($liveSettings -is [Management.Automation.PSCustomObject]) {
-    $beforeMerge = $liveSettings | ConvertTo-Json -Depth 100
-    Merge-JsonObject $liveSettings ($repoSettings | ConvertFrom-Json)
-    $afterMerge = $liveSettings | ConvertTo-Json -Depth 100
-    # Compare content, not text: Claude rewrites the file in its own JSON style,
-    # so a text compare would rewrite it (and leave a .bak) on every run.
-    $mergedText = if ($afterMerge -ceq $beforeMerge) { $liveText } else { $afterMerge + "`n" }
-}
-else {
-    $mergedText = $repoSettings
-}
-if ($mergedText -cne $liveText) {
-    if ($null -ne $liveText) { Copy-Item $claudeSettings "$claudeSettings.bak" -Force }
-    [IO.File]::WriteAllText($claudeSettings, $mergedText, $utf8NoBom)
-    Write-Ok "Claude settings.json (merged, statusline: $pythonPath)"
-}
-else {
-    Write-Skip "Claude settings.json" "up to date"
-}
+Merge-SettingsFile "Claude settings.json" (Join-Path $claudeDir "settings.json") $repoSettings
 # First-party mods (config\claude\mods) are a folder marketplace. settings.json
 # alone does not install them, so every run registers them through the CLI (both
 # commands are idempotent). Do not set CLAUDE_CONFIG_DIR here, even to ~\.claude:
@@ -592,34 +594,16 @@ Deploy-Config "Antigravity AGENTS.md" (Join-Path $RepoRoot "config\antigravity\A
 Deploy-AgentDocs "Antigravity" $agyDir
 Deploy-Config "Antigravity statusline.py"  (Join-Path $RepoRoot "config\antigravity\statusline.py")  (Join-Path $agyDir "statusline.py")
 
-$agySettings = Join-Path $agyDir "settings.json"
+# Antigravity writes its own keys (model, trusted workspaces) into settings.json,
+# so merge the repo's statusLine in rather than seeding it once: a refresh also
+# repoints a stale interpreter path.
 $statuslinePath = (Join-Path $agyDir "statusline.py") -replace '\\', '/'
-$agyCommand = '"{0}" "{1}"' -f $pythonPath, $statuslinePath
-if (-not (Test-Path $agySettings)) {
-    Deploy-Config "Antigravity settings.json" (Join-Path $RepoRoot "config\antigravity\settings.json") $agySettings
-    $rendered = [IO.File]::ReadAllText($agySettings) | ConvertFrom-Json
-    $rendered.statusLine.command = $agyCommand
-    [IO.File]::WriteAllText($agySettings, ($rendered | ConvertTo-Json -Depth 10), $utf8NoBom)
-}
-else {
-    try {
-        $raw = [IO.File]::ReadAllText($agySettings)
-        if ($raw -and $raw -notmatch '"statusLine"') {
-            $j = $raw | ConvertFrom-Json
-            $j | Add-Member -NotePropertyName "statusLine" -NotePropertyValue ([PSCustomObject]@{
-                type = "command"
-                command = $agyCommand
-                enabled = $true
-            }) -Force
-            [IO.File]::WriteAllText($agySettings, ($j | ConvertTo-Json -Depth 10), $utf8NoBom)
-            Write-Ok "Antigravity settings.json (wired statusLine)"
-        } else {
-            Write-Skip "Antigravity settings.json" "exists (runtime-managed)"
-        }
-    } catch {
-        Write-Skip "Antigravity settings.json" "exists (runtime-managed)"
-    }
-}
+$agyRepoSettings = [IO.File]::ReadAllText((Join-Path $RepoRoot "config\antigravity\settings.json"))
+# Unquoted: Antigravity runs the command through cmd, which receives quotes as
+# an escaped pair and then cannot find the program.
+if ("$pythonPath$statuslinePath" -match ' ') { Write-Skip "Antigravity statusline" "path has a space; command left unquoted" }
+$agyRepoSettings = $agyRepoSettings.Replace('__PYTHON__', $pythonPath).Replace('__AGY_STATUSLINE__', $statuslinePath)
+Merge-SettingsFile "Antigravity settings.json" (Join-Path $agyDir "settings.json") $agyRepoSettings
 
 $agyMcp = Join-Path $agyDir "mcp.json"
 if (-not (Test-Path $agyMcp)) {

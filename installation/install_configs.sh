@@ -175,6 +175,22 @@ install_agent_configs() {
         cp -f "$REPO_CONFIG_DIR/agents/ENGINEERING.md" "$dest/ENGINEERING.md"
     }
 
+    # Merge a rendered repo settings file into a live one that other writers
+    # share (see merge_settings.py), then drop the rendered copy.
+    merge_agent_settings() {
+        local rendered="$1" live="$2"
+        if command -v python3 >/dev/null 2>&1; then
+            python3 "$SCRIPT_DIR/merge_settings.py" "$rendered" "$live" \
+                || warning "$live merge failed; file left as it was"
+        elif [ ! -f "$live" ]; then
+            cp -f "$rendered" "$live"
+        else
+            # Never fall back to overwriting: that is what drops the other entries.
+            warning "python3 not found: $live left unmerged"
+        fi
+        rm -f "$rendered"
+    }
+
     # Claude Code
     mkdir -p "$HOME/.claude"
     cp -f "$REPO_CONFIG_DIR/claude/statusline.py" "$HOME/.claude/statusline.py"
@@ -189,16 +205,7 @@ install_agent_configs() {
     # settings.json and CLAUDE.md are shared with other installers (e.g. rtk)
     # and with /plugin and /effort, so merge into them instead of replacing
     # them: everyone else's entries survive a refresh.
-    if command -v python3 >/dev/null 2>&1; then
-        python3 "$SCRIPT_DIR/merge_settings.py" "$rendered" "$HOME/.claude/settings.json" \
-            || warning "Claude settings.json merge failed; file left as it was"
-    elif [ ! -f "$HOME/.claude/settings.json" ]; then
-        cp -f "$rendered" "$HOME/.claude/settings.json"
-    else
-        # Never fall back to overwriting: that is what drops the other entries.
-        warning "python3 not found: ~/.claude/settings.json left unmerged"
-    fi
-    rm -f "$rendered"
+    merge_agent_settings "$rendered" "$HOME/.claude/settings.json"
     deploy_claude_mods
     inject_sourcing "$HOME/.claude/CLAUDE.md" "@ENGINEERING.md" "Claude CLAUDE.md"
     deploy_shared_agent_docs "$HOME/.claude"
@@ -219,11 +226,19 @@ install_agent_configs() {
     cp -f "$REPO_CONFIG_DIR/antigravity/AGENTS.md" "$agy_dir/AGENTS.md"
     deploy_shared_agent_docs "$agy_dir"
     cp -f "$REPO_CONFIG_DIR/antigravity/statusline.py" "$agy_dir/statusline.py"
-    if [ ! -f "$agy_dir/settings.json" ]; then
-        cp "$REPO_CONFIG_DIR/antigravity/settings.json" "$agy_dir/settings.json"
-        render_token "$agy_dir/settings.json" __PYTHON__ "$python_path"
-        render_token "$agy_dir/settings.json" __AGY_STATUSLINE__ "$agy_dir/statusline.py"
-    fi
+    # Antigravity writes its own keys (model, trusted workspaces) into
+    # settings.json, so merge the repo's statusLine in rather than seeding it
+    # once: a refresh also repoints a stale interpreter path.
+    rendered="$(mktemp)"
+    cp -f "$REPO_CONFIG_DIR/antigravity/settings.json" "$rendered"
+    # Unquoted: Antigravity runs the command through cmd on Windows, which
+    # receives quotes as an escaped pair and then cannot find the program.
+    case "$python_path$agy_dir" in *" "*)
+        warning "Antigravity statusline command cannot quote a path with a space" ;;
+    esac
+    render_token "$rendered" __PYTHON__ "$python_path"
+    render_token "$rendered" __AGY_STATUSLINE__ "$agy_dir/statusline.py"
+    merge_agent_settings "$rendered" "$agy_dir/settings.json"
     if [ ! -f "$agy_dir/mcp.json" ]; then
         cp "$REPO_CONFIG_DIR/antigravity/mcp.json" "$agy_dir/mcp.json"
     fi

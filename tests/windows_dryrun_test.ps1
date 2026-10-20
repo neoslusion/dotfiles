@@ -97,6 +97,10 @@ try {
     Set-Content (Join-Path $ClaudeHome 'CLAUDE.md') '@RTK.md'
     New-Item -ItemType Directory -Path (Join-Path $FakeHome '.codex') -Force | Out-Null
     Set-Content (Join-Path $FakeHome '.codex\AGENTS.md') '@RTK.md'
+    # Antigravity writes its own keys into settings.json; an existing install
+    # may still carry a stale statusline command.
+    $AgySettingsPath = Join-Path $FakeHome '.gemini\antigravity-cli\settings.json'
+    [IO.File]::WriteAllText($AgySettingsPath, '{"model": "kept", "statusLine": {"type": "command", "command": "python old.py", "enabled": true}}')
     # Older installs injected the sidecar by its expanded path; that must count
     # as injected, or every shell dot-sources the profile twice.
     $ProfileFile = Join-Path $Docs 'PowerShell\Microsoft.PowerShell_profile.ps1'
@@ -174,7 +178,13 @@ $global:LASTEXITCODE = 0
     Assert-Exists (Join-Path $FakeHome '.codex\config.toml') 'Codex base config'
     Assert-Exists (Join-Path $FakeHome '.gemini\antigravity-cli\settings.json') 'Antigravity settings.json'
     $AntigravityStatuslinePath = (Join-Path $FakeHome '.gemini\antigravity-cli\statusline.py') -replace '\\', '/'
-    Assert-JsonCommandContains (Join-Path $FakeHome '.gemini\antigravity-cli\settings.json') $AntigravityStatuslinePath 'Antigravity statusline rendering'
+    Assert-JsonCommandContains $AgySettingsPath $AntigravityStatuslinePath 'Antigravity statusline rendering'
+    if ((Get-Content $AgySettingsPath -Raw | ConvertFrom-Json).statusLine.command.Contains('"')) {
+        Write-Fail 'Antigravity statusline command must be unquoted (cmd mangles quotes)'
+    }
+    if ((Get-Content $AgySettingsPath -Raw | ConvertFrom-Json).model -ne 'kept') {
+        Write-Fail 'Antigravity settings.json merge: foreign key kept'
+    }
     Assert-Exists (Join-Path $FakeHome '.gemini\antigravity-cli\mcp.json') 'Antigravity mcp.json'
     Assert-Exists (Join-Path $FakeHome '.gemini\antigravity-cli\statusline.py') 'Antigravity statusline.py'
     Assert-Identical (Join-Path $FakeHome '.config\opencode\AGENTS.md') (Join-Path $Root 'config\opencode\AGENTS.md') 'Opencode AGENTS.md'

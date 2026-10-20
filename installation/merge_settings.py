@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge the repo's Claude settings into a live settings.json.
+"""Merge the repo's Claude or Antigravity settings into a live settings.json.
 
 Usage: merge_settings.py <rendered-repo-settings.json> <live-settings.json>
 
