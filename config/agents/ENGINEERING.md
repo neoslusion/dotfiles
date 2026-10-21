@@ -29,6 +29,8 @@ explanation, and verification to the task's complexity and consequences.
 - Handle realistic failures where recovery, cleanup, or useful context is
   possible. Propagate errors; make fallback behavior visible. Never report
   success after a required step fails.
+- Never write a secret value literally into a command, file, or log. Read it
+  from its file or environment variable instead.
 
 ## Keep changes focused
 
@@ -47,6 +49,18 @@ explanation, and verification to the task's complexity and consequences.
 - Run relevant checks and project-required gates. Test observable behavior
   and invariants, not implementation details. For bugs, reproduce the failure
   when feasible and add a meaningful regression test.
+- Verify the real artifact (run the feature where it is used, read the actual
+  value), not a proxy such as a successful compile, a hand-run stand-in, or a
+  self-report.
+- Back each claim with something observed: output, code, docs, or
+  measurements. Label a hypothesis as one, and say "I don't know" rather than
+  guess.
+- When debugging, fix the first place the system went wrong, not where the
+  symptom surfaced, and look for other instances of the same fault. If two
+  fixes resting on one premise fail, test the premise before a third. Stop
+  after three disproven hypotheses and report what was tried and observed.
+- When the same correction recurs, encode it as a test, lint, or script
+  rather than another written instruction.
 - Review the final diff for unintended changes and unnecessary complexity.
   Do not weaken valid checks to make the change pass.
 - Continue until the requested outcome is complete and verified, or a concrete
