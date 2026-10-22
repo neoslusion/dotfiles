@@ -218,6 +218,20 @@ check_file "antigravity: AGENTS.md" "$HOME/.gemini/antigravity-cli/AGENTS.md"
 check_file "antigravity: mcp.json" "$HOME/.gemini/antigravity-cli/mcp.json"
 check_file "opencode: AGENTS.md" "$HOME/.config/opencode/AGENTS.md"
 check_file "opencode: opencode.json" "$HOME/.config/opencode/opencode.json"
+# Files existing is not enough: a mod registration or statusline path can point
+# at something gone, and the agent then fails with no other symptom.
+if command -v python3 &> /dev/null; then
+    while read -r level message; do
+        case "$level" in
+            pass) pass "$message" ;;
+            warn) warn "$message"; WARNINGS=$((WARNINGS + 1)) ;;
+            fail) fail "$message"; FAILURES=$((FAILURES + 1)) ;;
+        esac
+    done < <(python3 "$ROOT/installation/check_agents.py" "$HOME")
+else
+    warn "agents: python3 not found, wiring not checked"
+    WARNINGS=$((WARNINGS + 1))
+fi
 
 muted "--- secrets scaffold"
 check_file "secrets: env.sh" "$HOME/.secrets/env.sh"

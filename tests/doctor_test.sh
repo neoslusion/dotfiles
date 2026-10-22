@@ -10,6 +10,8 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 
 FAKE_BIN="$TMP_DIR/bin"
 mkdir -p "$FAKE_BIN"
+# The agent-wiring checks run real Python; everything else sees the fakes.
+REAL_PYTHON="$(command -v python3)"
 export PATH="$FAKE_BIN:/usr/bin:/bin"
 
 # Presence-only tools: doctor asserts these exist, never compares versions.
@@ -105,6 +107,51 @@ drift_output="$(run_doctor)"
 if ! grep -q 'config: atuin: content drift' <<< "$drift_output"; then
     printf 'Doctor did not report modified copy-managed config:\n%s\n' "$drift_output" >&2
     exit 1
+fi
+
+# Agent wiring: the two failures that once passed every file-exists check.
+native() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else printf '%s' "$1"; fi; }
+expect_agents() { # expect_agents <regex> <what>
+    local out
+    out="$("$REAL_PYTHON" "$ROOT/installation/check_agents.py" "$(native "$AGENT_HOME")")"
+    if ! grep -qE "$1" <<< "$out"; then
+        printf 'Agent wiring check missed %s:\n%s\n' "$2" "$out" >&2
+        exit 1
+    fi
+}
+AGENT_HOME="$TMP_DIR/agent-home"
+mkdir -p "$AGENT_HOME/.claude/mods/.claude-plugin" "$AGENT_HOME/.claude/plugins" \
+    "$AGENT_HOME/.gemini/antigravity-cli"
+cp "$ROOT/config/claude/mods/.claude-plugin/marketplace.json" "$AGENT_HOME/.claude/mods/.claude-plugin/"
+register_mods() { # register_mods <marketplace path> <mod>...
+    local path=$1 mod entries=""
+    shift
+    printf '{"my-mods": {"source": {"source": "directory", "path": "%s"}}}\n' "$path" \
+        > "$AGENT_HOME/.claude/plugins/known_marketplaces.json"
+    for mod in "$@"; do entries="$entries\"$mod@my-mods\": [{}],"; done
+    printf '{"version": 2, "plugins": {%s}}\n' "${entries%,}" > "$AGENT_HOME/.claude/plugins/installed_plugins.json"
+}
+all_mods=(context-meter pretty-tools cache-timer)
+register_mods "$(native "$TMP_DIR/deleted-temp-home/.claude/mods")" "${all_mods[@]}"
+expect_agents '^fail claude: my-mods registered at' 'mods registered at a deleted path'
+register_mods "$(native "$AGENT_HOME/.claude/mods")" context-meter pretty-tools
+expect_agents '^fail claude: mods not installed: cache-timer' 'a mod that is not installed'
+register_mods "$(native "$AGENT_HOME/.claude/mods")" "${all_mods[@]}"
+expect_agents '^pass claude: my-mods' 'a correct registration'
+
+touch "$AGENT_HOME/statusline.py"
+statusline() { # statusline <settings file> <command>
+    "$REAL_PYTHON" -c 'import json, sys; json.dump({"statusLine": {"type": "command", "command": sys.argv[2]}}, open(sys.argv[1], "w"))' \
+        "$(native "$1")" "$2"
+}
+agy_settings="$AGENT_HOME/.gemini/antigravity-cli/settings.json"
+statusline "$AGENT_HOME/.claude/settings.json" "\"$(native "$TMP_DIR/gone/python")\" \"$(native "$AGENT_HOME/statusline.py")\""
+expect_agents '^fail claude: statusline needs .*gone/python' 'a statusline interpreter that does not exist'
+statusline "$agy_settings" "$(native "$REAL_PYTHON") $(native "$AGENT_HOME/statusline.py")"
+expect_agents '^pass antigravity: statusline' 'a working Antigravity statusline'
+if [ "$("$REAL_PYTHON" -c 'import os; print(os.name)')" = nt ]; then
+    statusline "$agy_settings" "\"$(native "$REAL_PYTHON")\" \"$(native "$AGENT_HOME/statusline.py")\""
+    expect_agents '^fail antigravity: statusline command is quoted' 'a quoted Antigravity command on Windows'
 fi
 
 printf 'doctor tests passed\n'

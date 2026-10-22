@@ -18,6 +18,12 @@ printf '%s\n' "$*" >> "$HOME/.claude/mod-registration.log"
 EOF
 chmod +x "$TMP_DIR/bin/claude"
 export PATH="$TMP_DIR/bin:/usr/bin:/bin:$PATH"
+# Git Bash: the claude CLI's home is USERPROFILE, and the installer only
+# registers mods when it matches HOME.
+if command -v cygpath >/dev/null 2>&1; then
+    USERPROFILE="$(cygpath -w "$TMP_DIR/home")"
+    export USERPROFILE
+fi
 
 assert_contains() {
     local haystack="$1"
@@ -212,6 +218,20 @@ while IFS= read -r mod; do
         exit 1
     fi
 done <<< "$mod_names"
+# With HOME redirected away from the CLI's real home, registering would point
+# the real registry at a temp dir that is later deleted.
+if command -v cygpath >/dev/null 2>&1; then
+    registrations="$(wc -l < "$registration_log")"
+    HOME="$TMP_DIR/home" \
+    USERPROFILE="$(cygpath -w "$TMP_DIR")" \
+    XDG_STATE_HOME="$TMP_DIR/state" \
+    DOTFILES_LOG_FILE="$TMP_DIR/install.log" \
+        bash "$ROOT/installation/install_configs.sh" >/dev/null
+    if [[ "$(wc -l < "$registration_log")" -ne "$registrations" ]]; then
+        printf 'Expected no mod registration when the claude CLI home is not HOME.\n' >&2
+        exit 1
+    fi
+fi
 
 for agent_home in "${agent_homes[@]}"; do
     for file in "${unmanaged_files[@]}"; do

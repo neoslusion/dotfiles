@@ -113,6 +113,30 @@ Test-File "Opencode opencode.json" (Join-Path $ocDir "opencode.json")
 Test-File "Opencode shared docs"  (Join-Path $ocDir "ENGINEERING.md")
 Test-File "Secrets env scaffold"  (Join-Path $secretsDir "env.ps1")
 
+# Files existing is not enough: a mod registration or statusline path can point
+# at something gone, and the agent then fails with no other symptom. Same
+# checker as doctor.sh; the WindowsApps alias is skipped (it can open the Store).
+$python = Get-Command python -CommandType Application -ErrorAction SilentlyContinue |
+    Where-Object { $_.Source -notmatch '\\WindowsApps\\' } | Select-Object -First 1 -ExpandProperty Source
+if (-not $python) {
+    $python = Get-ChildItem (Join-Path $env:LOCALAPPDATA 'Python\pythoncore-*\python.exe') -ErrorAction SilentlyContinue |
+        Select-Object -Last 1 -ExpandProperty FullName
+}
+if ($python) {
+    foreach ($line in & $python (Join-Path $PSScriptRoot '..\installation\check_agents.py') $HOME) {
+        $level, $message = $line -split ' ', 2
+        Write-Host ("  {0,-34}" -f $message) -NoNewline
+        switch ($level) {
+            'pass' { Write-Host "ok" -ForegroundColor Green }
+            'warn' { Write-Host "warn" -ForegroundColor Yellow }
+            default { Write-Host "FAIL" -ForegroundColor Red; $script:failures++ }
+        }
+    }
+}
+else {
+    Write-Host ("  {0,-34}" -f "Agent wiring") -NoNewline; Write-Host "skipped (no python)" -ForegroundColor Yellow
+}
+
 Write-Host ""
 if ($failures -eq 0) {
     Write-Host "All checks passed." -ForegroundColor Green

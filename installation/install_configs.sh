@@ -152,6 +152,14 @@ deploy_claude_mods() {
         warning "claude not on PATH: mods copied to ~/.claude/mods but not registered"
         return 0
     fi
+    # Git Bash: the Windows claude CLI keeps its registry under USERPROFILE,
+    # not HOME. With HOME redirected (a test or temp-home run) it would point
+    # the real registry at this HOME, and the mods break once it is deleted.
+    if [ -n "${USERPROFILE:-}" ] && command -v cygpath >/dev/null 2>&1 \
+        && [ "$(cygpath -u "$USERPROFILE")" != "$HOME" ]; then
+        warning "claude CLI home is not \$HOME: mods copied but not registered"
+        return 0
+    fi
     local mod
     claude plugin marketplace add "$HOME/.claude/mods" >/dev/null \
         || { warning "claude mods: marketplace registration failed"; return 0; }

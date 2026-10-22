@@ -21,7 +21,10 @@ def fg(code, s):
 
 
 def git(cwd, *args):
-    p = subprocess.run(["git", "-C", cwd] + list(args), capture_output=True, text=True,
+    # --no-optional-locks: `git status` otherwise takes .git/index.lock to save
+    # its index refresh. On Windows the timeout hard-kills git, which then
+    # leaves that lock behind and breaks every later git command in the repo.
+    p = subprocess.run(["git", "--no-optional-locks", "-C", cwd] + list(args), capture_output=True, text=True,
                        encoding="utf-8", errors="replace", timeout=1)
     return p.stdout if p.returncode == 0 else ""
 
