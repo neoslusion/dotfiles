@@ -128,4 +128,14 @@ for name in $declared; do
     esac
 done
 
+# Statuslines run git on every redraw under a hard timeout. A killed
+# `git status` leaves .git/index.lock behind and breaks the repo for every
+# later git command, so each call must skip the optional index lock.
+for statusline in "$ROOT"/config/*/statusline.py; do
+    if grep -n '\["git",' "$statusline" | grep -v '"--no-optional-locks"' >&2; then
+        printf '%s: git call without --no-optional-locks\n' "${statusline#"$ROOT"/}" >&2
+        exit 1
+    fi
+done
+
 printf 'install policy tests passed\n'

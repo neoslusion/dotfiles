@@ -61,9 +61,12 @@ def main():
     untracked = 0
     repo_root = ""
 
+    # --no-optional-locks: `git status` otherwise takes .git/index.lock to save
+    # its index refresh. On Windows the timeout hard-kills git, which then
+    # leaves that lock behind and breaks every later git command in the repo.
     try:
         p = subprocess.run(
-            ["git", "-C", norm_cwd, "status", "--porcelain=v2", "--branch"],
+            ["git", "--no-optional-locks", "-C", norm_cwd, "status", "--porcelain=v2", "--branch"],
             capture_output=True,
             text=True,
             timeout=0.6,
