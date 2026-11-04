@@ -49,6 +49,8 @@ keymap("n", "<leader>bD", function() Snacks.bufdelete.delete({ force = true }) e
 -- Stay in indent mode
 keymap("v", "<", "<gv", opts)                                                -- Visual mode <: shift-left and keep selection active
 keymap("v", ">", ">gv", opts)                                                -- Visual mode >: shift-right and keep selection active
+keymap("v", "<Tab>", ">gv", opts)                                            -- Visual mode Tab: shift-right and keep selection active
+keymap("v", "<S-Tab>", "<gv", opts)                                          -- Visual mode Shift+Tab: shift-left and keep selection active
 
 -- Move text up and down
 keymap("v", "J", ":m '>+1<CR>gv=gv", opts)                                   -- Visual J: move selected lines down, reselect, reindent
