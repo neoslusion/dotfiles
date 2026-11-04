@@ -215,6 +215,11 @@ function Get-DotfilesInitScript {
     if (-not [IO.File]::Exists($cache) -or
         -not [IO.File]::ReadAllText($cache).StartsWith("$identity`r`n")) {
         $init = (& $Command.Source @Arguments) -join "`r`n"
+        # 322 (0x142) / 130 = interrupted (Ctrl+C, Windows shutdown). Reuse the
+        # last good cache silently instead of killing the profile mid-shutdown.
+        if ($LASTEXITCODE -in @(322, 130)) {
+            return $(if ([IO.File]::Exists($cache)) { $cache })
+        }
         if ($LASTEXITCODE -ne 0) { throw "$Name init failed (exit $LASTEXITCODE)" }
         Set-DotfilesCache $cache "$identity`r`n$init`r`n"
     }
@@ -262,14 +267,14 @@ if ($dotfilesInteractive -and (Get-DotfilesCommand 'starship')) {
         }
     }
     $cache = Get-DotfilesInitScript 'starship' (Get-DotfilesCommand 'starship') @('init', 'powershell', '--print-full-init')
-    . $cache
+    if ($cache) { . $cache }
 }
 
 if ($dotfilesZoxideCommand) {
     # z/zi still work; --hook none avoids wrapping every prompt in a no-op hook.
     # Directory scoring was already disabled by the previous empty hook override.
     $cache = Get-DotfilesInitScript 'zoxide' $dotfilesZoxideCommand @('init', 'powershell', '--hook', 'none')
-    . $cache
+    if ($cache) { . $cache }
 }
 
 # --- Atuin shell history (parity with core.zsh) ---
@@ -277,5 +282,5 @@ if ($dotfilesZoxideCommand) {
 # PSReadLine history navigation is faster and predictable for normal use.
 if ($dotfilesInteractive -and $dotfilesAtuinCommand) {
     $cache = Get-DotfilesInitScript 'atuin' $dotfilesAtuinCommand @('init', 'powershell', '--disable-up-arrow')
-    . $cache
+    if ($cache) { . $cache }
 }
