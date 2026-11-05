@@ -36,10 +36,11 @@ dynamic_padding = false
 # Alacritty's Windows default is already "Full"; Transparent and Buttonless are
 # macOS-only per the config docs, so there is nothing to opt into on this side.
 decorations = "Full"
-# Opaque on purpose: translucency on Windows costs a compositor re-blur every
-# frame. Flip to 0.95
-# if you want the frosted look and can afford it.
-opacity = 1.0
+# Translucent on purpose since the frieren wallpaper went up
+# (Pictures\wallpapers\frieren.jpg): the picture shows behind the window when
+# nothing overlaps it. 0.9 keeps text opaque while the image reads; 0.95 is a
+# subtler frost; 1.0 restores the old solid look.
+opacity = 0.9
 
 [font]
 # Nerd Font, because starship, tmux and the status line all assume powerline and
@@ -59,6 +60,13 @@ builtin_box_drawing = false
 y = 1
 
 [colors]
+# Fade every cell background with the window opacity, not just the default
+# background. Without this the Tokyo Night tmux strip paints itself solid and
+# keeps the wallpaper hidden behind it (the since-0.10 transparent-background
+# behavior). Delete this line to keep the tmux strip opaque and only margins
+# glassy; note it also fades vim and other programs' own backgrounds.
+transparent_background_colors = true
+
 # Catppuccin Macchiato. Each value is annotated with its upstream palette key so
 # a future theme swap is a search rather than a guess.
 
