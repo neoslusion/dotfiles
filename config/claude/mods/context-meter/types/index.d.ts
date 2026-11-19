@@ -3,6 +3,10 @@ export type Snapshot = { used: number; window: number; percent: number; rows: Me
 
 declare module 'claude-code' {
   interface PluginState {
-    'context-meter': { snapshot: Snapshot | null }
+    'context-meter': {
+      snapshot: Snapshot | null
+      rateLimits: { kind: string; percentUsed: number; resetsAt?: string }[]
+      now: number
+    }
   }
 }

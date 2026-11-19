@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Claude Code statusline: agent mark, model, path, git, context %, cost.
+# Claude Code statusline: agent mark, model, path, git, cost.
 # Claude re-runs this on every conversation event, so git results are cached
 # for a second.
 import json
@@ -13,7 +13,7 @@ GIT_TTL_MS = 1000
 
 C_ICON, C_MODEL, C_PATH, C_BRANCH = 213, 255, 117, 114
 C_UNSTAGED, C_STAGED, C_UNTRACKED, C_COST = 214, 120, 245, 213
-C_SEP, C_CTX_OK, C_CTX_WARN, C_CTX_HOT = 240, 114, 214, 203
+C_SEP = 240
 
 
 def fg(code, s):
@@ -99,14 +99,7 @@ def main():
             seg += fg(C_UNTRACKED, " ?%d" % gi["untracked"])
         segs.append(seg)
 
-    # Claude computes this against the model's real window; null until the
-    # session's first API response, and again right after /compact.
-    used_pct = (j.get("context_window") or {}).get("used_percentage")
-    if used_pct is not None:
-        pct = round(float(used_pct))
-        color = C_CTX_HOT if pct >= 85 else C_CTX_WARN if pct >= 70 else C_CTX_OK
-        segs.append(fg(color, "ctx %d%%" % pct))
-
+    # Context use is drawn by the context-meter mod's band above the prompt.
     usd = (j.get("cost") or {}).get("total_cost_usd")
     if usd is not None:
         segs.append(fg(C_COST, "$%.2f" % float(usd)))
