@@ -25,6 +25,10 @@
 {{-   end -}}
 {{-   $py = $py | default "python" -}}
 {{- else -}}
-{{-   $py = lookPath "python3" | default "python3" -}}
+{{- /* mise's python3 shim (mise installs python on every Unix setup): a fixed
+       path, not lookPath, which finds /usr/bin/python3 before `mise install`
+       and the shim after it, so the rendered settings would change between
+       runs and `chezmoi verify` fails. */ -}}
+{{-   $py = joinPath .chezmoi.homeDir ".local/share/mise/shims/python3" -}}
 {{- end -}}
 {{- $py | replace "\\" "/" -}}

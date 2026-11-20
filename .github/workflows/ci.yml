@@ -16,10 +16,10 @@ jobs:
     name: gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -27,7 +27,7 @@ jobs:
     name: shellcheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: |
           git ls-files -z '*.sh' 'home/dot_local/bin/executable_*' | xargs -0 shellcheck -S warning
 
@@ -51,10 +51,12 @@ jobs:
     steps:
       - name: Container prerequisites (sudo, git, curl)
         if: matrix.container != ''
+        # -Syu, never -Sy: a partial upgrade pulls new libraries (openssl)
+        # that break the image's installed packages.
         run: |
-          if command -v pacman >/dev/null; then pacman -Sy --noconfirm sudo git curl
+          if command -v pacman >/dev/null; then pacman -Syu --noconfirm sudo git curl
           else dnf install -y sudo git curl; fi
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install chezmoi
         run: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b "$HOME/.local/bin"
       - name: chezmoi init --apply
@@ -64,7 +66,8 @@ jobs:
       - name: Verify
         run: |
           export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
-          chezmoi verify
+          # verify prints nothing on failure; show the diff.
+          chezmoi verify || { chezmoi diff; exit 1; }
           nvim --version | head -1
           for t in lazygit starship atuin zoxide fzf eza bat fd rg delta btm herdr; do
             command -v "$t" >/dev/null || { echo "missing: $t"; exit 1; }
@@ -79,7 +82,7 @@ jobs:
     name: apply (windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install chezmoi
         shell: pwsh
         run: iex "&{$(irm 'https://get.chezmoi.io/ps1')} -b '$HOME\bin'"

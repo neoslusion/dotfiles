@@ -4,6 +4,8 @@
 # mise tools. Re-runs when either list changes.
 set -euo pipefail
 
+{{/* `get`, not .chezmoi.osRelease.idLike: Fedora and Arch have no ID_LIKE,
+     and a missing map key is a template error. */ -}}
 {{ if eq .chezmoi.os "darwin" -}}
 if ! command -v brew >/dev/null 2>&1; then
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -11,12 +13,12 @@ if ! command -v brew >/dev/null 2>&1; then
 fi
 brew install{{ range .packages.brew.formulae }} {{ . }}{{ end }}
 brew install --cask{{ range .packages.brew.casks }} {{ . }}{{ end }}
-{{- else if or (eq .chezmoi.osRelease.id "debian" "ubuntu") (contains "debian" (.chezmoi.osRelease.idLike | default "")) }}
+{{- else if or (eq .chezmoi.osRelease.id "debian" "ubuntu") (contains "debian" (get .chezmoi.osRelease "idLike")) }}
 sudo DEBIAN_FRONTEND=noninteractive apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y{{ range .packages.apt }} {{ . }}{{ end }}
-{{- else if or (eq .chezmoi.osRelease.id "arch") (contains "arch" (.chezmoi.osRelease.idLike | default "")) }}
+{{- else if or (eq .chezmoi.osRelease.id "arch") (contains "arch" (get .chezmoi.osRelease "idLike")) }}
 sudo pacman -Syu --needed --noconfirm{{ range .packages.pacman }} {{ . }}{{ end }}
-{{- else if or (eq .chezmoi.osRelease.id "fedora") (contains "fedora" (.chezmoi.osRelease.idLike | default "")) }}
+{{- else if or (eq .chezmoi.osRelease.id "fedora") (contains "fedora" (get .chezmoi.osRelease "idLike")) }}
 sudo dnf install -y{{ range .packages.dnf }} {{ . }}{{ end }}
 {{- else }}
 echo "install-packages: unsupported distro '{{ .chezmoi.osRelease.id }}'; install the base packages yourself" >&2
