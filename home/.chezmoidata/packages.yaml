@@ -1,0 +1,80 @@
+# Packages per platform, read by home/.chezmoiscripts/*install-packages*.
+# A script re-runs only when its rendered text changes, i.e. when the list
+# for that platform changes. No versions: everything installs latest.
+#
+# Unix CLI tools (neovim, lazygit, starship, ...) come from mise on every
+# distro (home/dot_config/mise/config.toml), so these lists hold only the base
+# system packages mise and the shell need.
+packages:
+  apt:
+    - zsh
+    - git
+    - curl
+    - wget
+    - unzip
+    - tar
+    - build-essential
+    - tmux
+    - fontconfig
+  pacman:
+    - zsh
+    - git
+    - curl
+    - wget
+    - unzip
+    - tar
+    - base-devel
+    - tmux
+    - fontconfig
+  dnf:
+    - zsh
+    - git
+    - curl
+    - wget
+    - unzip
+    - tar
+    - gcc
+    - gcc-c++
+    - make
+    - tmux
+    - fontconfig
+  brew:
+    formulae:
+      - git
+      - wget
+      - tmux
+      - FelixKratz/formulae/sketchybar
+    casks:
+      - font-jetbrains-mono-nerd-font
+  # Windows: Scoop for everything (user scope, no admin), even when the
+  # Store or winget has a copy too.
+  scoop:
+    buckets:
+      - extras
+      - nerd-fonts
+    apps:
+      - git
+      - pwsh
+      - extras/alacritty
+      - nerd-fonts/JetBrainsMono-NF
+      - starship
+      - zoxide
+      - atuin
+      - fzf
+      - bat
+      - fd
+      - eza
+      - delta
+      # main/ prefix: a bare `python` makes Scoop resolve a .\Python
+      # directory in the cwd instead.
+      - main/python
+      - jq
+      - ripgrep
+      - neovim
+      # Treesitter parser builds: zig is the C compiler, plus the CLI and cmake.
+      - zig
+      - cmake
+      - tree-sitter
+      - win32yank
+      - extras/lazygit
+      - uv

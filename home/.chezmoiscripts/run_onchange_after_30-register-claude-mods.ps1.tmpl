@@ -1,0 +1,19 @@
+{{- if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+# Windows twin of run_onchange_after_30-register-claude-mods.sh.tmpl: register
+# the `my-mods` folder marketplace and refresh it when any mod file changes.
+# Do not set CLAUDE_CONFIG_DIR (see the .sh twin).
+# mods hash: {{ template "mods-hash" . }}
+if (-not (Get-Command claude -ErrorAction SilentlyContinue)) {
+    Write-Warning 'claude not on PATH: mods deployed to ~\.claude\mods but not registered'
+    exit 0
+}
+$modsDir = Join-Path $HOME '.claude\mods'
+& claude plugin marketplace add $modsDir *> $null
+& claude plugin marketplace update my-mods | Out-Null
+if ($LASTEXITCODE -ne 0) { Write-Warning 'claude mods: marketplace update failed'; exit 0 }
+foreach ($mod in Get-ChildItem $modsDir -Directory | Where-Object { Test-Path (Join-Path $_.FullName '.claude-plugin\plugin.json') }) {
+    & claude plugin install "$($mod.Name)@my-mods" --scope user | Out-Null
+    if ($LASTEXITCODE -ne 0) { Write-Warning "claude mods: install of $($mod.Name) failed" }
+}
+{{ end -}}

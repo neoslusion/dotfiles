@@ -1,0 +1,1 @@
+{ "name": "delegation-workers", "version": "0.1.0", "description": "Band above the prompt listing this session's agent-delegation worker tasks (copied from the agent-delegation plugin)", "types": "./types/index.d.ts" }

@@ -1,0 +1,22 @@
+{{- /*
+  Body of a modify-template for a JSON settings file other writers share
+  (rtk's hook, /plugin, /effort, Antigravity's own keys). Repo keys win, nested
+  objects merge, keys the repo does not set are kept, so a key deleted from the
+  repo is NOT removed from the live file. A missing live file gets the repo
+  settings. When the merge changes nothing, the live text is returned as is, so
+  a tool's own formatting does not cause a rewrite on every apply.
+  Call with (dict "stdin" .chezmoi.stdin "repo" <rendered repo JSON>).
+*/ -}}
+{{- $repo := .repo | fromJson -}}
+{{- if not .stdin -}}
+{{ $repo | toPrettyJson "  " }}
+{{- else -}}
+{{-   $live := .stdin | fromJson -}}
+{{-   $before := $live | toJson -}}
+{{-   $merged := mergeOverwrite $live $repo -}}
+{{-   if eq ($merged | toJson) $before -}}
+{{ .stdin }}
+{{-   else -}}
+{{ $merged | toPrettyJson "  " }}
+{{-   end -}}
+{{- end -}}

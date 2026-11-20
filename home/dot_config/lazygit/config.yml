@@ -1,0 +1,52 @@
+# Lazygit, simplified from craftzdog/dotfiles. Solarized to match Neovim;
+# everything not listed is lazygit's default.
+
+gui:
+  theme:
+    activeBorderColor:
+      - '#529ef9' # blue
+      - bold
+    inactiveBorderColor:
+      - '#6e8b95' # base01
+    optionsTextColor:
+      - '#32b9aa' # cyan
+    selectedLineBgColor:
+      - '#073642' # base02
+    cherryPickedCommitBgColor:
+      - '#529ef9' # blue
+    cherryPickedCommitFgColor:
+      - '#fdf7e7' # base3
+    unstagedChangesColor:
+      - '#f86265' # red
+    defaultFgColor:
+      - '#91a8aa' # base0
+  mouseEvents: false
+  scrollHeight: 30
+git:
+  autoFetch: false
+  commit:
+    autoWrapCommitMessage: true
+    autoWrapWidth: 72
+  diffRenderers:
+    - colorArg: always
+      command: delta --dark --syntax-theme="Solarized (dark)" --paging=never
+customCommands:
+  - key: '<c-r>'
+    command: 'git rebase -i HEAD~{{.Form.NumberOfCommits}}'
+    context: 'commits'
+    prompts:
+      - type: 'input'
+        title: 'How many commits to rebase?'
+        key: 'NumberOfCommits'
+        initialValue: '5'
+  - key: '<c-t>'
+    command: 'git tag {{.Form.TagName}} -m "{{.Form.TagMessage}}"'
+    context: 'commits'
+    description: 'Create tag'
+    prompts:
+      - type: 'input'
+        title: 'Tag name:'
+        key: 'TagName'
+      - type: 'input'
+        title: 'Tag message:'
+        key: 'TagMessage'

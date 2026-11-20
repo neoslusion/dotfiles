@@ -1,0 +1,34 @@
+{{- /*
+  Absolute interpreter for the agent statuslines: agents run them through a
+  non-interactive shell that may not have the interactive PATH. On Windows the
+  WindowsApps `python` alias never counts: it is the Python install manager,
+  adds ~100 ms per render and can print its own setup output into the bar.
+  Forward slashes, so the path needs no escaping inside JSON.
+*/ -}}
+{{- $py := "" -}}
+{{- if eq .chezmoi.os "windows" -}}
+{{- /* Scoop's python first (Scoop owns the Windows tools), then a real one on
+       PATH, then the usual install locations. */ -}}
+{{-   $scoopPy := joinPath .chezmoi.homeDir "scoop/apps/python/current/python.exe" -}}
+{{-   $onPath := lookPath "python" -}}
+{{-   if stat $scoopPy -}}
+{{-     $py = $scoopPy -}}
+{{-   else if and $onPath (not (contains "WindowsApps" $onPath)) -}}
+{{-     $py = $onPath -}}
+{{-   else -}}
+{{-     $local := env "LOCALAPPDATA" -}}
+{{-     range (list (joinPath $local "Python/pythoncore-*/python.exe")
+                    (joinPath $local "Programs/Python/Python3*/python.exe")) -}}
+{{-       $hits := glob . -}}
+{{-       if and (not $py) $hits }}{{ $py = last $hits }}{{ end -}}
+{{-     end -}}
+{{-   end -}}
+{{-   $py = $py | default "python" -}}
+{{- else -}}
+{{- /* mise's python3 shim (mise installs python on every Unix setup): a fixed
+       path, not lookPath, which finds /usr/bin/python3 before `mise install`
+       and the shim after it, so the rendered settings would change between
+       runs and `chezmoi verify` fails. */ -}}
+{{-   $py = joinPath .chezmoi.homeDir ".local/share/mise/shims/python3" -}}
+{{- end -}}
+{{- $py | replace "\\" "/" -}}

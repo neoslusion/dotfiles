@@ -1,0 +1,7 @@
+{{- /* One hash over every file of the Claude Code mods, so the registration
+     script re-runs whenever any mod changes. */ -}}
+{{- $all := "" -}}
+{{- range (glob (joinPath .chezmoi.sourceDir "dot_claude/mods/**/*")) -}}
+{{-   if not (stat .).isDir }}{{ $all = print $all (include . | sha256sum) }}{{ end -}}
+{{- end -}}
+{{- $all | sha256sum -}}

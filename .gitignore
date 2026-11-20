@@ -24,4 +24,8 @@ anthropic-key
 history.jsonl
 
 # Claude Code lays engine-generated type files beside each mod it loads.
-config/claude/mods/*/.claude-plugin/types/
+home/dot_claude/mods/*/dot_claude-plugin/types/
+
+# Neovim: machine-local plugins and vim.pack's lockfile stay out of git.
+home/dot_config/nvim/lua/plugins/local.lua
+home/dot_config/nvim/nvim-pack-lock.json

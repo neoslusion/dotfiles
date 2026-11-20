@@ -1,0 +1,29 @@
+{{- if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+# Windows machine setup that is not a file under $HOME. Re-runs when this
+# script changes. No BOM on purpose: the rendered script must be empty on
+# other platforms.
+
+# One ~/.config tree on every platform: Neovim and lazygit read
+# %LOCALAPPDATA% on Windows unless XDG_CONFIG_HOME is set. Both honour it, and
+# Neovim keeps its data (plugins, Mason) in %LOCALAPPDATA%\nvim-data. Applies
+# to programs started after this, so restart the terminal once.
+$xdg = Join-Path $HOME '.config'
+if ([Environment]::GetEnvironmentVariable('XDG_CONFIG_HOME', 'User') -ne $xdg) {
+    [Environment]::SetEnvironmentVariable('XDG_CONFIG_HOME', $xdg, 'User')
+    Write-Host "XDG_CONFIG_HOME set to $xdg (restart the terminal to pick it up)"
+}
+
+# Load the dotfiles profile (~\PowerShell\dotfiles.profile.ps1) from $PROFILE.
+# $PROFILE lives in Documents, which Known Folder Move may put in OneDrive,
+# outside chezmoi's reach, so only this one line goes there. Either spelling
+# of the path counts: older installs wrote the expanded path, and matching only
+# one appended a second dot-source that loaded the profile twice per shell.
+$profilePath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Microsoft.PowerShell_profile.ps1'
+$sidecar = Join-Path $HOME 'PowerShell\dotfiles.profile.ps1'
+$sourceLine = '. "$HOME\PowerShell\dotfiles.profile.ps1"  # dotfiles local profile'
+if (-not (Test-Path $profilePath)) { New-Item -ItemType File -Path $profilePath -Force | Out-Null }
+if (-not (Select-String -Path $profilePath -Pattern @('$HOME\PowerShell\dotfiles.profile.ps1', $sidecar) -SimpleMatch -Quiet)) {
+    Add-Content -Path $profilePath -Value $sourceLine
+}
+{{ end -}}

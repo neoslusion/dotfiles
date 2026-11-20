@@ -1,0 +1,22 @@
+{{- if ne .chezmoi.os "windows" -}}
+#!/bin/bash
+# Register the first-party Claude Code mods (~/.claude/mods, the `my-mods`
+# folder marketplace) and refresh them when any mod file changes. Listing them
+# in settings.json does not install them. Do not set CLAUDE_CONFIG_DIR here,
+# even to ~/.claude: the CLI then looks for ~/.claude/.claude.json instead of
+# ~/.claude.json, warns, and creates a stray one.
+# mods hash: {{ template "mods-hash" . }}
+set -uo pipefail
+if ! command -v claude >/dev/null 2>&1; then
+    echo "claude not on PATH: mods deployed to ~/.claude/mods but not registered" >&2
+    exit 0
+fi
+claude plugin marketplace add "$HOME/.claude/mods" >/dev/null 2>&1 || true
+claude plugin marketplace update my-mods >/dev/null \
+    || { echo "claude mods: marketplace update failed" >&2; exit 0; }
+for manifest in "$HOME"/.claude/mods/*/.claude-plugin/plugin.json; do
+    mod="$(basename "$(dirname "$(dirname "$manifest")")")"
+    claude plugin install "$mod@my-mods" --scope user >/dev/null \
+        || echo "claude mods: install of $mod failed" >&2
+done
+{{ end -}}

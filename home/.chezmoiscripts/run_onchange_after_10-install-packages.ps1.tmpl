@@ -1,0 +1,54 @@
+{{- if eq .chezmoi.os "windows" -}}
+$ErrorActionPreference = 'Stop'
+# Windows tools through Scoop (user scope, no admin), from
+# home/.chezmoidata/packages.yaml. Re-runs when the rendered list changes.
+# No BOM on purpose: the rendered script must be empty on other platforms.
+
+if (-not (Get-Command scoop -ErrorAction SilentlyContinue)) {
+    # Scoop refuses an elevated shell; run `chezmoi apply` non-elevated.
+    Invoke-RestMethod -Uri 'https://get.scoop.sh' | Invoke-Expression
+    $env:Path = "$HOME\scoop\shims;$env:Path"
+}
+
+$buckets = @(scoop bucket list 6> $null | ForEach-Object { $_.Name })
+{{- range .packages.scoop.buckets }}
+if ($buckets -notcontains '{{ . }}') { scoop bucket add '{{ . }}' }
+{{- end }}
+
+# Scoop is the owner of every tool here: an app is skipped only when Scoop
+# already has it. A copy from the Store, winget or another installer does not
+# count; remove it yourself if you want only one.
+function Install-ScoopApp([string]$Spec) {
+    $name = ($Spec -split '/')[-1]
+    if (Test-Path (Join-Path $HOME "scoop\apps\$name")) { return }
+    scoop install $Spec
+    # Scoop's exit code is unreliable through its shim; check the app dir.
+    if (-not (Test-Path (Join-Path $HOME "scoop\apps\$name"))) {
+        Write-Warning "scoop install $Spec did not produce ~\scoop\apps\$name"
+    }
+}
+{{- range .packages.scoop.apps }}
+Install-ScoopApp '{{ . }}'
+{{- end }}
+
+# Herdr: native Windows is preview-only with no Scoop or winget package, so
+# use its installer (`herdr update` keeps it current afterwards).
+if (-not (Get-Command herdr -ErrorAction SilentlyContinue)) {
+    Invoke-RestMethod -Uri 'https://herdr.dev/install.ps1' | Invoke-Expression
+}
+
+# PSFzf into ~\.psmodules, not -Scope CurrentUser: Known Folder Move puts the
+# CurrentUser module dir (Documents\PowerShell) in OneDrive, and every import
+# then pays the sync filter driver. The profile prepends this dir per session.
+$modDir = Join-Path $HOME '.psmodules'
+if (-not (Test-Path (Join-Path $modDir 'PSFzf'))) {
+    New-Item -ItemType Directory -Path $modDir -Force | Out-Null
+    Save-Module PSFzf -Path $modDir -Force
+}
+
+# delta as git's pager (lazygit already pages through it via its config).
+if (Get-Command delta -ErrorAction SilentlyContinue) {
+    git config --global core.pager delta
+    git config --global interactive.diffFilter 'delta --color-only'
+}
+{{ end -}}

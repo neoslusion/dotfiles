@@ -1,0 +1,52 @@
+{{- if ne .chezmoi.os "windows" -}}
+# Repos and archives chezmoi fetches itself, tracking upstream (latest).
+# `chezmoi apply` pulls them at most once per refreshPeriod; force with
+# `chezmoi apply --refresh-externals`.
+
+[".oh-my-zsh"]
+    type = "git-repo"
+    url = "https://github.com/ohmyzsh/ohmyzsh.git"
+    refreshPeriod = "168h"
+    [".oh-my-zsh".clone]
+        args = ["--depth", "1"]
+    [".oh-my-zsh".pull]
+        args = ["--ff-only"]
+
+[".oh-my-zsh/custom/plugins/zsh-autosuggestions"]
+    type = "git-repo"
+    url = "https://github.com/zsh-users/zsh-autosuggestions.git"
+    refreshPeriod = "168h"
+    [".oh-my-zsh/custom/plugins/zsh-autosuggestions".clone]
+        args = ["--depth", "1"]
+
+[".oh-my-zsh/custom/plugins/zsh-syntax-highlighting"]
+    type = "git-repo"
+    url = "https://github.com/zsh-users/zsh-syntax-highlighting.git"
+    refreshPeriod = "168h"
+    [".oh-my-zsh/custom/plugins/zsh-syntax-highlighting".clone]
+        args = ["--depth", "1"]
+
+[".oh-my-zsh/custom/plugins/zsh-vi-mode"]
+    type = "git-repo"
+    url = "https://github.com/jeffreytse/zsh-vi-mode.git"
+    refreshPeriod = "168h"
+    [".oh-my-zsh/custom/plugins/zsh-vi-mode".clone]
+        args = ["--depth", "1"]
+
+[".tmux/plugins/tpm"]
+    type = "git-repo"
+    url = "https://github.com/tmux-plugins/tpm.git"
+    refreshPeriod = "168h"
+    [".tmux/plugins/tpm".clone]
+        args = ["--depth", "1"]
+
+{{- if eq .chezmoi.os "linux" }}
+
+# macOS gets the font from the Homebrew cask instead.
+[".local/share/fonts/JetBrainsMonoNerdFont"]
+    type = "archive"
+    url = "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+    refreshPeriod = "720h"
+    include = ["*.ttf"]
+{{- end }}
+{{- end }}

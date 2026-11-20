@@ -1,0 +1,25 @@
+# Unix tools and runtimes, all latest. `mise upgrade` updates them; chezmoi
+# runs `mise install` whenever this file changes. Shims dir is on PATH
+# (zprofile.zsh, core.zsh), so non-interactive programs such as Neovim's
+# Mason see the same tools without `mise activate`.
+[tools]
+python = "latest"
+rust = "latest"
+uv = "latest"
+
+neovim = "latest"
+tree-sitter = "latest"
+lazygit = "latest"
+starship = "latest"
+atuin = "latest"
+zoxide = "latest"
+fzf = "latest"
+eza = "latest"
+bat = "latest"
+fd = "latest"
+ripgrep = "latest"
+delta = "latest"
+bottom = "latest"
+yazi = "latest"
+pre-commit = "latest"
+"github:herdrdev/herdr" = "latest"
