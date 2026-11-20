@@ -1,0 +1,26 @@
+{{- /*
+  Absolute interpreter for the agent statuslines: agents run them through a
+  non-interactive shell that may not have the interactive PATH. On Windows the
+  WindowsApps `python` alias never counts: it is the Python install manager,
+  adds ~100 ms per render and can print its own setup output into the bar.
+  Forward slashes, so the path needs no escaping inside JSON.
+*/ -}}
+{{- $py := "" -}}
+{{- if eq .chezmoi.os "windows" -}}
+{{-   $onPath := lookPath "python" -}}
+{{-   if and $onPath (not (contains "WindowsApps" $onPath)) -}}
+{{-     $py = $onPath -}}
+{{-   else -}}
+{{-     $local := env "LOCALAPPDATA" -}}
+{{-     range (list (joinPath .chezmoi.homeDir "scoop/apps/python/current/python.exe")
+                    (joinPath $local "Python/pythoncore-*/python.exe")
+                    (joinPath $local "Programs/Python/Python3*/python.exe")) -}}
+{{-       $hits := glob . -}}
+{{-       if and (not $py) $hits }}{{ $py = last $hits }}{{ end -}}
+{{-     end -}}
+{{-   end -}}
+{{-   $py = $py | default "python" -}}
+{{- else -}}
+{{-   $py = lookPath "python3" | default "python3" -}}
+{{- end -}}
+{{- $py | replace "\\" "/" -}}

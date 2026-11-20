@@ -72,7 +72,7 @@ Tmux mirrors Herdr's `[keys]` table chord for chord and binds no other direct ch
 
 ## 3. Lazygit Universal Workflow
 
-Lazygit is configured with the Tokyo Night Storm palette (`config/lazygit/config.yml`) and is callable anywhere:
+Lazygit is configured with a Solarized palette (`home/dot_config/lazygit/config.yml`) and is callable anywhere:
 
 - **Invocation**: Press **`Alt + g`** in Herdr, Tmux, or Neovim (or type **`lg`** in any shell).
 - **Dismissal**: Press **`q`** inside Lazygit to close the modal popup and return directly to your previous prompt or buffer.

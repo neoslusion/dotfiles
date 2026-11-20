@@ -1,0 +1,7 @@
+{
+  "statusLine": {
+    "type": "command",
+    "command": "{{ includeTemplate "python-path" . }} {{ .chezmoi.homeDir }}/.gemini/antigravity-cli/statusline.py",
+    "enabled": true
+  }
+}

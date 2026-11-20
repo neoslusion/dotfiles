@@ -1,0 +1,34 @@
+# Targets chezmoi must not manage, per OS (paths are relative to $HOME).
+
+# Mod sources carry their own tests and type stubs; Claude Code loads only
+# the plugin, hooks and marketplace files, but the mods dir is deployed whole.
+.claude/mods/**/node_modules
+
+{{- if ne .chezmoi.os "windows" }}
+# Windows only
+AppData
+PowerShell
+.wslconfig
+.secrets/env.ps1
+{{- end }}
+
+{{- if eq .chezmoi.os "windows" }}
+# Unix only: zsh, tmux, mise and the ~/.local/bin helpers. herdr reads
+# %APPDATA%\herdr on Windows, deployed from AppData/Roaming instead.
+.zshrc
+.zshenv
+.zprofile
+.tmux.conf
+.config/zsh
+.config/tmux
+.config/atuin
+.config/bottom
+.config/herdr
+.config/mise
+.local
+.secrets/env.sh
+{{- end }}
+
+{{- if ne .chezmoi.os "darwin" }}
+.config/sketchybar
+{{- end }}

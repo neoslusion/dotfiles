@@ -1,0 +1,14 @@
+{{- /*
+  Body of a modify-template for a file other tools also append to (rtk adds
+  its own import lines): keep the live file as it is and append `line` only
+  when missing. Call with (dict "stdin" .chezmoi.stdin "line" "...").
+*/ -}}
+{{- if not .stdin -}}
+{{ .line }}
+{{ else if contains .line .stdin -}}
+{{ .stdin }}
+{{- else -}}
+{{ .stdin }}
+# Added by dotfiles
+{{ .line }}
+{{ end -}}

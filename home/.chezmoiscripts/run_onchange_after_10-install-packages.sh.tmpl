@@ -1,0 +1,37 @@
+{{- if ne .chezmoi.os "windows" -}}
+#!/bin/bash
+# Base packages for this platform (home/.chezmoidata/packages.yaml), then the
+# mise tools. Re-runs when either list changes.
+set -euo pipefail
+
+{{ if eq .chezmoi.os "darwin" -}}
+if ! command -v brew >/dev/null 2>&1; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
+fi
+brew install{{ range .packages.brew.formulae }} {{ . }}{{ end }}
+brew install --cask{{ range .packages.brew.casks }} {{ . }}{{ end }}
+{{- else if or (eq .chezmoi.osRelease.id "debian" "ubuntu") (contains "debian" (.chezmoi.osRelease.idLike | default "")) }}
+sudo DEBIAN_FRONTEND=noninteractive apt-get update
+sudo DEBIAN_FRONTEND=noninteractive apt-get install -y{{ range .packages.apt }} {{ . }}{{ end }}
+{{- else if or (eq .chezmoi.osRelease.id "arch") (contains "arch" (.chezmoi.osRelease.idLike | default "")) }}
+sudo pacman -Syu --needed --noconfirm{{ range .packages.pacman }} {{ . }}{{ end }}
+{{- else if or (eq .chezmoi.osRelease.id "fedora") (contains "fedora" (.chezmoi.osRelease.idLike | default "")) }}
+sudo dnf install -y{{ range .packages.dnf }} {{ . }}{{ end }}
+{{- else }}
+echo "install-packages: unsupported distro '{{ .chezmoi.osRelease.id }}'; install the base packages yourself" >&2
+{{- end }}
+
+# mise installs every CLI tool in ~/.config/mise/config.toml. Runs after
+# chezmoi has written the files, so that config is already in place.
+# mise config hash: {{ include "dot_config/mise/config.toml" | sha256sum }}
+if ! command -v mise >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/mise" ]; then
+    curl -fsSL https://mise.run | sh
+fi
+export PATH="$HOME/.local/bin:${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims:$PATH"
+mise install --yes
+
+# delta as git's pager (lazygit already pages through it via its config).
+git config --global core.pager delta
+git config --global interactive.diffFilter "delta --color-only"
+{{ end -}}

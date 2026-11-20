@@ -5,8 +5,8 @@
 # Default: treat as text, store LF in the repo.
 * text=auto eol=lf
 
-# Repo helper scripts are bash (some are extensionless) — force LF.
-scripts/**   text eol=lf
+# Bash helpers deployed to ~/.local/bin (some are extensionless) — force LF.
+home/dot_local/bin/**   text eol=lf
 *.sh         text eol=lf
 *.bash       text eol=lf
 *.zsh        text eol=lf

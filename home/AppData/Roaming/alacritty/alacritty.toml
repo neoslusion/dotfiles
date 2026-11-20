@@ -1,0 +1,173 @@
+# Alacritty configuration - native Windows, Solarized Dark (vivid) outer chrome.
+# Deployed to %APPDATA%\alacritty\alacritty.toml by chezmoi (Windows only).
+#
+# WHY NOT ~/.config/alacritty/: on Windows Alacritty reads ONLY
+# %APPDATA%\alacritty\alacritty.toml. It ignores XDG_CONFIG_HOME and the XDG
+# paths it uses on Linux and macOS, hence home/AppData/Roaming/ in the repo.
+#
+# Solarized Dark (vivid) on purpose: the same palette as Neovim's
+# solarized-osaka. The tmux strip inside a WSL shell keeps its own Tokyo Night
+# accents, so the outer and inner layers still read apart.
+#
+# MANAGED FILE: `chezmoi apply` overwrites local edits. Tweak the repo copy,
+# or pull a live edit back with `chezmoi re-add`.
+
+[general]
+# Reload on save so colour and font tuning needs no restart. A new shell is
+# still required for anything under [env].
+live_config_reload = true
+
+[terminal]
+# Alacritty's Windows default is plain "powershell", i.e. Windows PowerShell 5.1.
+# This repo is pwsh-7-only and never runs WinPS 5.1 - see the PSModulePath
+# isolation in ~/PowerShell/dotfiles.profile.ps1 for what a 5.1 child does when it inherits
+# PS7 state. Be explicit rather than inheriting the default.
+shell = { program = "pwsh", args = ["-NoLogo"] }
+# OnlyCopy: never let a remote application write the local clipboard.
+osc52 = "OnlyCopy"
+
+[window]
+padding = { x = 8, y = 10 }
+# Fixed padding; dynamic padding would spread the margin instead.
+dynamic_padding = false
+# Alacritty's Windows default is already "Full"; Transparent and Buttonless are
+# macOS-only per the config docs, so there is nothing to opt into on this side.
+decorations = "Full"
+# Translucent on purpose since the frieren wallpaper went up
+# (Pictures\wallpapers\frieren.jpg): the picture shows behind the window when
+# nothing overlaps it. 0.9 keeps text opaque while the image reads; 0.95 is a
+# subtler frost; 1.0 restores the old solid look.
+opacity = 0.9
+
+[font]
+# Nerd Font, because starship, tmux and the status line all assume powerline and
+# box-drawing glyphs exist. Must stay in step with the other layers.
+normal = { family = "JetBrainsMono Nerd Font", style = "Regular" }
+bold = { family = "JetBrainsMono Nerd Font", style = "Bold" }
+italic = { family = "JetBrainsMono Nerd Font", style = "Italic" }
+bold_italic = { family = "JetBrainsMono Nerd Font", style = "Bold Italic" }
+size = 11.5
+# Do NOT let Alacritty use its built-in box-drawing font: it would override the
+# Nerd Font glyphs and break the tmux and status-bar separators.
+builtin_box_drawing = false
+
+[font.offset]
+# Lift the baseline a point so underlines and strikethrough on descenders do not
+# clip against the cell bottom.
+y = 1
+
+[colors]
+# Fade every cell background with the window opacity, not just the default
+# background. Without this the Tokyo Night tmux strip paints itself solid and
+# keeps the wallpaper hidden behind it (the since-0.10 transparent-background
+# behavior). Delete this line to keep the tmux strip opaque and only margins
+# glassy; note it also fades vim and other programs' own backgrounds.
+transparent_background_colors = true
+
+# Solarized Dark vivid, ported from craftzdog's Ghostty theme (the palette the
+# same repo uses for solarized-osaka.nvim). Each value is annotated with its
+# Solarized role so a future theme swap is a search rather than a guess.
+
+[colors.primary]
+background = "#031219" # base03 (vivid)
+foreground = "#91a8aa" # base0
+dim_foreground = "#6e8b95" # base01
+
+[colors.cursor]
+text = "#002831" # base03 surface
+cursor = "#91a8aa" # base0
+
+[colors.vi_mode_cursor]
+# Sibling of [colors.cursor], NOT a child of it. Alacritty warns
+# "Unused config key: vi_mode_cursor" for the nested spelling.
+text = "#002831" # base03 surface
+cursor = "#f8579a" # magenta
+
+[colors.selection]
+text = "#9fb2b2" # base1
+background = "#002831" # base03 surface
+
+[colors.search]
+matches = { foreground = "#002831", background = "#d49a0a" } # yellow
+focused_match = { foreground = "#002831", background = "#fb5c41" } # orange
+
+[colors.hints]
+start = { foreground = "#002831", background = "#8987d3" } # violet
+end = { foreground = "#002831", background = "#529ef9" } # blue
+
+[colors.line_indicator]
+foreground = "#002831" # base03 surface
+background = "#f8579a" # magenta
+
+[colors.footer_bar]
+foreground = "#002831" # base03 surface
+background = "#6e8b95" # base01
+
+[colors.normal]
+black = "#002831" # base03 (palette 0)
+red = "#f86265" # red
+green = "#94b109" # green
+yellow = "#d49a0a" # yellow
+blue = "#529ef9" # blue
+magenta = "#f8579a" # magenta
+cyan = "#32b9aa" # cyan
+white = "#f0ebdc" # base2
+
+[colors.bright]
+black = "#6e8b95" # base01 (palette 8)
+red = "#fb5c41" # orange (bright red)
+green = "#6e8b95" # base01 (palette 10)
+yellow = "#7895a0" # base00 (palette 11)
+blue = "#91a8aa" # base0 (palette 12)
+magenta = "#8987d3" # violet (palette 13)
+cyan = "#9fb2b2" # base1 (palette 14)
+white = "#fdf7e7" # base3 (palette 15)
+
+[cursor]
+# The visual bell flashes at the cursor colour, so keep the cursor the
+# brightest thing on screen for the flash to land on.
+style = { shape = "Block", blinking = "On" }
+vi_mode_style = { shape = "Beam", blinking = "On" }
+unfocused_hollow = true
+thickness = 1.0
+
+[bell]
+# Audible bell off, quick visual flash at the cursor colour. Alacritty's bell
+# accepts hex only and hard-errors on a symbolic value, so base0 is spelled
+# out.
+animation = "EaseOut"
+duration = 75
+color = "#91a8aa" # base0 - same value as [colors.cursor] cursor
+
+[scrolling]
+history = 10000
+multiplier = 3
+
+[selection]
+# Windows has no primary selection, so a copy must land on the real clipboard or
+# neither win32yank nor the WSL side will ever see it.
+save_to_clipboard = true
+
+[mouse]
+hide_when_typing = true
+
+# No custom key bindings on purpose. KEYBINDINGS.md gives Alt+hjkl to herdr, tmux
+# and Neovim, and a terminal-level Alt binding would shadow them on the way up.
+# Alacritty's defaults leave Alt alone, which is what the three-layer doctrine
+# needs.
+
+[[hints.enabled]]
+# Ctrl+Shift+O opens a URL under the cursor; `cmd /c start` is the Windows
+# command from Alacritty's own configuration docs. Left-click also works.
+command = { program = "cmd", args = ["/c", "start", ""] }
+hyperlinks = true
+post_processing = true
+persist = false
+mouse.enabled = true
+binding = { key = "O", mods = "Control|Shift" }
+# Single-quoted TOML literal string: no escape processing at all, so the regex
+# metacharacters below stay literal and the file always parses. Written by hand
+# rather than copied from the docs because the docs' basic-string form contains
+# a \s escape that is invalid TOML and would stop Alacritty loading the file.
+# The character class excludes whitespace, so URLs still terminate correctly.
+regex = '(ipfs:|ipns:|magnet:|mailto:|gemini://|gopher://|https?://|file:|git://|ssh:|ftp://)[A-Za-z0-9._~:/?#@!$&*+,;=%()-]+'
