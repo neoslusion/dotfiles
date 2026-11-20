@@ -428,8 +428,8 @@ Deploy-Config "Starship config" `
     (Join-Path $HOME ".config\starship.toml")
 
 # Same Neovim config as the Linux side. Windows Neovim reads
-# %LOCALAPPDATA%\nvim, NOT ~/.config/nvim. lazy.nvim bootstraps plugins on
-# first launch (lazy-lock.json pins versions).
+# %LOCALAPPDATA%\nvim, NOT ~/.config/nvim. Neovim's built-in vim.pack
+# downloads plugins on first launch; there is no lockfile to pin.
 Deploy-ConfigDir "Neovim config" `
     (Join-Path $RepoRoot "config\nvim") `
     (Join-Path $env:LOCALAPPDATA "nvim")

@@ -25,7 +25,7 @@ install.sh -> installation/common_install.sh -> installation/preflight_config.sh
 
 - `installation/`: internal installer blocks. `utils.sh` toolbox, `versions.env` pins, `release_assets` per-arch asset table, `config_manifest` deploy list, `install_*.sh` per-domain installers, `doctor.sh`, `preflight_config.sh`.
 - `config/`: source of truth, 15 tool dirs. `config/<tool>/` per tool; deployed by copy, never symlink.
-- `scripts/`: runtime helpers (`bump-version`, `sync-nvim-locks`, `bootstrap`, `dotsync`, `sys-info`, `audit-nvim-keymaps`, `utils/paths.sh`).
+- `scripts/`: runtime helpers (`bump-version`, `bootstrap`, `dotsync`, `sys-info`, `audit-nvim-keymaps`, `utils/paths.sh`).
 - `windows/`: native-Windows subsystem (Alacritty + pwsh 7, `install.ps1`, `$WingetPins`, `profile.ps1`, `doctor.ps1`, `dotsync.ps1`).
 - `tests/`: bash suites + `*.ps1` suites + `run_all.sh` orchestrator + `distro_smoke.sh` container test.
 - `.github/workflows/`: `ci.yml` gates, `drift.yml` weekly pin-drift reporter. `.githooks/pre-commit` opt-in fast gate.
@@ -40,7 +40,6 @@ install.sh -> installation/common_install.sh -> installation/preflight_config.sh
 
 scripts/dotsync nvim         # fast redeploy one module; `all|--list|--dry-run`
 scripts/bump-version lazygit # bump one pin; --dry-run previews; --check reports all drift
-scripts/sync-nvim-locks      # snapshot lazy/mason locks into config/nvim/; --restore reverses
 bash tests/run_all.sh        # all local suites; --smoke adds docker smoke
 bash tests/<name>_test.sh    # single suite, e.g. bash tests/install_policy_test.sh
 bash tests/distro_smoke.sh [ubuntu:22.04|fedora:latest|archlinux:latest]
@@ -75,7 +74,7 @@ Architecture patterns to follow, not reinvent:
 
 - Entry: `install.sh`, `install.ps1` -> `windows/install.ps1`, `installation/common_install.sh`, `installation/utils.sh`, `installation/install_configs.sh`, `installation/doctor.sh`, `installation/preflight_config.sh`.
 - Pins/deploy: `installation/versions.env`, `installation/release_assets`, `installation/config_manifest`, `windows/install.ps1` (`$WingetPins` parity with `versions.env`).
-- Shell/nvim/tmux: `config/nvim/init.lua` (+ `lua/config/settings.lua`, `keymaps.lua`, `lua/plugins/`), `config/terminal/.zshrc|.zshenv|core.zsh|starship.toml`, `config/tmux/.tmux.conf|tmux.core.conf`, `config/atuin/config.toml`, `config/lazygit/config.yml`.
+- Shell/nvim/tmux: `config/nvim/init.lua` (+ `lua/config/{options,keymaps,autocmds,commands,workarounds}.lua`, `lua/plugins/`, `after/lsp/`), `config/terminal/.zshrc|.zshenv|core.zsh|starship.toml`, `config/tmux/.tmux.conf|tmux.core.conf`, `config/atuin/config.toml`, `config/lazygit/config.yml`.
 - Agents: `config/agents/ENGINEERING.md` copied verbatim into `~/.claude`, `~/.codex`, `~/.gemini`, `~/.config/opencode`; `config/claude/settings.json`, `config/codex/config.toml`, `config/opencode/opencode.json`, `config/antigravity/settings.json`. The only plugins installed are the repo's own Claude Code mods (`config/claude/mods/` -> `~/.claude/mods/`, registered as the `my-mods` folder marketplace via the `claude` CLI each refresh); no other plugins/marketplaces/hook tools. ENGINEERING.md is the only shared agent content.
 - Secrets (scaffold only, never repo content): `~/.secrets/env.sh` (600/700).
 
@@ -83,7 +82,7 @@ Architecture patterns to follow, not reinvent:
 
 - Bash on Linux/macOS/WSL; pwsh 7 only on Windows (never WinPS 5.1, run non-elevated).
 - Package managers: `system_install` abstraction on Linux; `brew` branch on macOS; Scoop-first with winget fallback on Windows (`Install-App`; `-Winget` inverts, `-NoAdmin` forces Scoop-only).
-- Node via nvm lazy-load (`config/terminal/core.zsh`) + `~/.local/bin` shims; Mason needs `npm` on PATH. Windows Copilot needs system Node via winget. `python3` for `audit_nvim_keymaps.py` and both agent statuslines (`config/claude/statusline.py`, `config/antigravity/statusline.py`).
+- Node via nvm lazy-load (`config/terminal/core.zsh`) + `~/.local/bin` shims; Mason needs `npm` on PATH. Pyright needs `npm` too (Windows: system Node via winget). `python3` for `audit_nvim_keymaps.py` and both agent statuslines (`config/claude/statusline.py`, `config/antigravity/statusline.py`).
 - Tooling gates: `shellcheck -S warning` on all `*.sh`/`*.bash` + 4 extensionless scripts; `bash -n` in pre-commit; `gitleaks` full-history in CI, `protect --staged` in hook.
 
 ## Testing & QA

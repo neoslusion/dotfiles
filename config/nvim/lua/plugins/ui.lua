@@ -1,227 +1,188 @@
-return {
-  -- Bufferline (Tabs)
-  {
-    "akinsho/bufferline.nvim",
-    event = "VeryLazy",
-    keys = {
-      { "<leader>bP", "<Cmd>BufferLineTogglePin<CR>", desc = "Toggle Pin" },
-      { "<leader>bN", "<Cmd>BufferLineGroupClose ungrouped<CR>", desc = "Delete Non-Pinned Buffers" },
-      { "<leader>bo", "<Cmd>BufferLineCloseOthers<CR>", desc = "Delete Other Buffers" },
-      { "<leader>br", "<Cmd>BufferLineCloseRight<CR>", desc = "Delete Buffers to the Right" },
-      { "<leader>bl", "<Cmd>BufferLineCloseLeft<CR>", desc = "Delete Buffers to the Left" },
-      { "<S-h>", "<cmd>BufferLineCyclePrev<cr>", desc = "Prev Buffer" },
-      { "<S-l>", "<cmd>BufferLineCycleNext<cr>", desc = "Next Buffer" },
-      { "[b", "<cmd>BufferLineCyclePrev<cr>", desc = "Prev Buffer" },
-      { "]b", "<cmd>BufferLineCycleNext<cr>", desc = "Next Buffer" },
-    },
-    opts = {
-      options = {
-        close_command = function(n)
-          Snacks.bufdelete(n)
-        end,
-        right_mouse_command = function(n)
-          Snacks.bufdelete(n)
-        end,
-        diagnostics = false, -- Diagnostics remain in the gutter and statusline
-        show_buffer_icons = false,
-        show_buffer_close_icons = false,
-        show_close_icon = false,
-        separator_style = "thin",
-        always_show_bufferline = false,
-        -- Hide the dashboard buffer from the tabline
-        custom_filter = function(buf_number)
-          if vim.bo[buf_number].filetype == "snacks_dashboard" then
-            return false
-          end
-          -- Hide empty [No Name] buffers
-          if vim.fn.bufname(buf_number) == "" and vim.bo[buf_number].buftype == "" then
-            return false
-          end
-          return true
-        end,
-        offsets = {
-          {
-            filetype = "neo-tree",
-            text = "File Explorer",
-            highlight = "Directory",
-            text_align = "left",
-          },
-        },
-      },
-    },
-    config = function(_, opts)
-      require("bufferline").setup(opts)
-    end,
-  },
+local icons = Util.icons
+local lualine_utils = require("utils.lualine")
 
-  -- Lualine (Status Line)
-  {
-    "nvim-lualine/lualine.nvim",
-    event = "VeryLazy",
-    init = function()
-      vim.g.lualine_laststatus = vim.o.laststatus
-      if vim.fn.argc(-1) > 0 then
-        -- set an empty statusline till lualine loads
-        vim.o.statusline = " "
-      else
-        -- hide the statusline on the starter page
-        vim.o.laststatus = 0
-      end
-    end,
-    opts = function()
-      local lualine_require = require("lualine_require")
-      lualine_require.require = require
+require("solarized-osaka").setup({
+	style = "vivid",
+	transparent = true,
+})
+vim.cmd.colorscheme("solarized-osaka")
 
-      local icons = {
-        diagnostics = {
-          Error = "E:",
-          Warn = "W:",
-          Hint = "H:",
-          Info = "I:",
-        },
-        git = {
-          added = "+",
-          modified = "~",
-          removed = "-",
-        },
-      }
+require("mini.icons").setup()
+require("mini.icons").mock_nvim_web_devicons()
 
-      vim.o.laststatus = vim.g.lualine_laststatus
+-- Custom tabline setup
+require("utils.tabline").setup()
+vim.o.showtabline = 1
+vim.o.tabline = "%!v:lua.require('utils.tabline').render()"
 
-      return {
-        options = {
-          theme = "tokyonight",
-          icons_enabled = false,
-          globalstatus = true,
-          refresh = { refresh_time = 50 },
-          disabled_filetypes = { statusline = { "dashboard", "alpha", "starter" } },
-          component_separators = "",
-          section_separators = "",
-        },
-        sections = {
-          lualine_a = { "mode" },
-          lualine_b = { "branch" },
-          lualine_c = {
-            {
-              "diagnostics",
-              symbols = {
-                error = icons.diagnostics.Error,
-                warn = icons.diagnostics.Warn,
-                info = icons.diagnostics.Info,
-                hint = icons.diagnostics.Hint,
-              },
-            },
-            "filetype",
-            { "filename", path = 1 },
-          },
-          lualine_x = {
-            {
-              "diff",
-              -- Gitsigns already computes buffer changes. Reuse those counts
-              -- instead of starting another git diff on buffer switches/saves.
-              source = function()
-                local status = vim.b.gitsigns_status_dict
-                if status then
-                  return { added = status.added, modified = status.changed, removed = status.removed }
-                end
-              end,
-              symbols = {
-                added = icons.git.added,
-                modified = icons.git.modified,
-                removed = icons.git.removed,
-              },
-            },
-          },
-          lualine_y = {
-            { "progress", separator = " ", padding = { left = 1, right = 0 } },
-            { "location", padding = { left = 0, right = 1 } },
-          },
-          lualine_z = {},
-        },
-        extensions = { "neo-tree", "lazy" },
-      }
-    end,
-  },
+require("snacks").setup({
+	indent = { enabled = true },
+	scroll = { enabled = false },
+	picker = {
+		enabled = true,
+		sources = {
+			files = { hidden = true },
+			grep = { hidden = true },
+		},
+		layouts = {
+			default = { layout = { width = 0.9, height = 0.9 } },
+		},
+	},
+	notifier = { enabled = true },
+	statuscolumn = { enabled = true },
+	words = { enabled = true },
+	lazygit = {
+		enabled = true,
+		configure = true, -- auto-sets nvim-remote preset & syncs theme
+		theme = {
+			activeBorderColor = { fg = "WarningMsg", bold = true },
+		},
+	},
+})
 
-  -- Neo-tree (File Explorer)
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    branch = "v3.x",
-    cmd = "Neotree",
-    dependencies = {
-      "nvim-lua/plenary.nvim",
-      "nvim-tree/nvim-web-devicons",
-      "MunifTanjim/nui.nvim",
-    },
-    keys = {
-      {
-        "<leader>e",
-        "<cmd>Neotree toggle<cr>",
-        desc = "Toggle NeoTree",
-      },
-      {
-        "<leader>E",
-        "<cmd>Neotree reveal<cr>",
-        desc = "Reveal in NeoTree",
-      },
-      -- Note: <C-b> is NOT bound here -- tmux's default prefix is C-b and swallows it
-      -- before Neovim sees it. Use <leader>e to toggle the tree instead.
-    },
-    deactivate = function()
-      vim.cmd([[Neotree close]])
-    end,
-    opts = {
-      sources = { "filesystem", "buffers", "git_status", "document_symbols" },
-      open_files_do_not_replace_types = { "terminal", "Trouble", "trouble", "qf", "Outline" },
-      filesystem = {
-        bind_to_cwd = false,
-        follow_current_file = { enabled = true },
-        -- Windows watcher handles retain callbacks after stop, and busy build
-        -- trees can flood the event queue. Neo-tree refreshes on writes instead;
-        -- use R for changes made outside the editor.
-        use_libuv_file_watcher = vim.fn.has("win32") == 0,
-      },
-      window = {
-        position = "left",
-        width = 30,
-        mappings = {
-          ["<space>"] = "none",
-          ["l"] = "open",
-          ["h"] = "close_node",
-        },
-      },
-      default_component_configs = {
-        indent = {
-          with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
-          expander_collapsed = "",
-          expander_expanded = "",
-          expander_highlight = "NeoTreeExpander",
-        },
-        git_status = {
-          symbols = {
-            added = "", -- or "✚", but this is redundant info if you use git_status_colors on the name
-            modified = "", -- or "", but this is redundant info if you use git_status_colors on the name
-            deleted = "", -- this can only be used in the git_status source
-            renamed = "", -- this can only be used in the git_status source
-            -- Status type
-            untracked = "",
-            ignored = "",
-            unstaged = "",
-            staged = "",
-            conflict = "",
-          },
-        },
-      },
-    },
-    config = function(_, opts)
-      require("neo-tree").setup(opts)
-    end,
-  },
+require("tiny-cmdline").setup({
+	position = {
+		y = "20%",
+	},
+})
 
-  -- Smooth movement is provided by smear-cursor (cursor) + snacks.scroll (scroll).
-  -- mini.animate was removed: its cursor animation duplicated smear-cursor.
+require("lualine").setup({
+	options = {
+		theme = "auto",
+		globalstatus = true,
+		disabled_filetypes = { statusline = { "dashboard", "alpha", "ministarter", "snacks_dashboard" } },
+		refresh = {
+			events = {
+				"WinEnter",
+				"BufEnter",
+				"BufWritePost",
+				"SessionLoadPost",
+				"FileChangedShellPost",
+				"VimResized",
+				"Filetype",
+				"CursorMoved",
+				"CursorMovedI",
+				"ModeChanged",
+				-- Macro
+				"RecordingEnter",
+				"RecordingLeave",
+			},
+		},
+	},
+	sections = {
+		lualine_a = { "mode" },
+		lualine_b = { "branch" },
 
-  -- Icons
-  { "nvim-tree/nvim-web-devicons", lazy = true },
-  { "echasnovski/mini.icons", version = false },
-}
+		lualine_c = {
+			lualine_utils.root_dir(),
+			{ "filetype", icon_only = true, separator = "", padding = { left = 1, right = 0 } },
+			{
+				lualine_utils.pretty_path({
+					length = 0,
+					relative = "cwd",
+					modified_hl = "MatchParen",
+					directory_hl = "",
+					filename_hl = "Bold",
+					modified_sign = "",
+					readonly_icon = " 󰌾 ",
+				}),
+			},
+		},
+		lualine_x = {
+			lualine_utils.macro_recording(),
+			{
+				"diagnostics",
+				symbols = {
+					error = icons.diagnostics.Error,
+					warn = icons.diagnostics.Warn,
+					info = icons.diagnostics.Info,
+					hint = icons.diagnostics.Hint,
+				},
+			},
+			{
+				"diff",
+				symbols = {
+					added = icons.git.added,
+					modified = icons.git.modified,
+					removed = icons.git.removed,
+				},
+				source = function()
+					local gitsigns = vim.b.gitsigns_status_dict
+					if gitsigns then
+						return {
+							added = gitsigns.added,
+							modified = gitsigns.changed,
+							removed = gitsigns.removed,
+						}
+					end
+				end,
+			},
+		},
+		lualine_y = {
+			{ "progress", separator = " ", padding = { left = 1, right = 1 } },
+		},
+		lualine_z = {
+			{ "location", padding = { left = 1, right = 1 } },
+		},
+	},
+})
+
+require("incline").setup({
+	window = {
+		margin = { vertical = 0, horizontal = 1 },
+		zindex = 10,
+	},
+	hide = {
+		cursorline = "smart",
+	},
+	render = function(props)
+		local filename = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(props.buf), ":t")
+		if vim.bo[props.buf].modified then
+			filename = "[+] " .. filename
+		end
+
+		local icon, hl = MiniIcons.get("file", filename)
+		return { { icon, group = hl }, { " " }, { filename } }
+	end,
+})
+
+require("codediff").setup({
+	explorer = {
+		width = 50,
+		auto_open_on_cursor = true,
+		view_mode = "tree", -- "list" or "tree"
+		line_stats = {
+			enabled = true,
+		},
+	},
+	diff = {
+		compact = true,
+		compact_context_lines = 8,
+		compact_sync_folds = true, -- open/close folds in both panes together
+	},
+	keymaps = {
+		view = {},
+	},
+})
+
+vim.diagnostic.config({
+	underline = true,
+	update_in_insert = false,
+	virtual_text = {
+		spacing = 4,
+		source = "if_many",
+		prefix = "●",
+		format = function(diagnostic)
+			return string.format("%s (%s: %s)", diagnostic.message, diagnostic.source, diagnostic.code)
+		end,
+	},
+	severity_sort = true,
+	signs = {
+		text = {
+			[vim.diagnostic.severity.ERROR] = icons.diagnostics.Error,
+			[vim.diagnostic.severity.WARN] = icons.diagnostics.Warn,
+			[vim.diagnostic.severity.HINT] = icons.diagnostics.Hint,
+			[vim.diagnostic.severity.INFO] = icons.diagnostics.Info,
+		},
+	},
+})

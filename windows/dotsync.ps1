@@ -121,5 +121,4 @@ Write-Host "dotsync: $ConfigSrc -> (LOCALAPPDATA)"
 $rc = 0
 foreach ($m in $targets) { if (-not (Sync-One $m)) { $rc = 1 } }
 if (-not $DryRun) { Write-Host "Done. Replaced configs were backed up to <dest>.bak." }
-Write-Host "Reminder: in Neovim run :Lazy restore after syncing to match lazy-lock.json."
 exit $rc
