@@ -2,10 +2,10 @@
 
 Standalone native-Windows counterpart of the Linux dotfiles: Alacritty +
 PowerShell 7 + the same modern CLI tools and starship prompt as the Linux side.
-Alacritty is a plain, fast window in Catppuccin Macchiato; herdr supplies panes
-and tabs inside it, and tmux inside a WSL shell keeps its Tokyo Night strip, so
-the two layers never blur together. Windows does its job, WSL does its job —
-neither side requires the other.
+Alacritty is a plain, fast window in Solarized Dark (vivid) matching Neovim;
+herdr supplies panes and tabs inside it, and tmux inside a WSL shell keeps its
+Tokyo Night strip, so the two layers never blur together. Windows does its job,
+WSL does its job — neither side requires the other.
 
 ## Install
 
@@ -87,7 +87,7 @@ the full `ctrl+b` prefix keeps working alongside:
 
 ## Manual verification checklist
 
-- [ ] Alacritty opens in Catppuccin Macchiato with the JetBrainsMono Nerd Font
+- [ ] Alacritty opens in Solarized Dark (vivid) with the JetBrainsMono Nerd Font
 - [ ] Nerd Font glyphs render (starship prompt symbols, `ls` icons)
 - [ ] Default shell is native pwsh 7 with the dotfiles profile loaded
 - [ ] `herdr` starts; `Alt+n` splits, `Alt+t` opens a tab
@@ -95,7 +95,7 @@ the full `ctrl+b` prefix keeps working alongside:
 - [ ] In pwsh 7: `z <dir>`, `cat <file>` (bat), `ls`/`ll` (eza icons) work
 - [ ] `Ctrl+R` shell history (atuin; PSFzf history when atuin is absent) / `Ctrl+T` fuzzy files (PSFzf)
 - [ ] Prompt looks identical to the Linux starship prompt
-- [ ] `nvim` opens with the shared config; lazy.nvim installs plugins on first launch
+- [ ] `nvim` opens with the shared config; built-in `vim.pack` installs plugins on first launch
 
 ## Notes
 
@@ -134,8 +134,8 @@ the full `ctrl+b` prefix keeps working alongside:
   `wsl --shutdown` when convenient to apply.
 - **Neovim config location**: Windows Neovim reads `%LOCALAPPDATA%\nvim`, not
   `~/.config/nvim`; the installer deploys the shared `config/nvim` there.
-  First launch downloads plugins (pinned by `lazy-lock.json`) — needs network.
+  First launch downloads plugins via Neovim's built-in `vim.pack` — needs network.
   Treesitter compiles parsers and needs a C compiler on Windows — the
   installer ships zig (compiler) and cmake for this; if you see parser build
   errors anyway, `winget install zig.zig` (or LLVM) and restart nvim.
-  Copilot needs Node.js: `winget install OpenJS.NodeJS.LTS`.
+  Pyright (Python language server) needs Node.js: `winget install OpenJS.NodeJS.LTS`.

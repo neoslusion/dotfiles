@@ -65,7 +65,6 @@ Maintenance helpers:
 scripts/bump-version lazygit          # bump a versions.env pin to latest (downloads + hashes)
 scripts/bump-version nvim 0.12.4      # or pin an exact version (no v prefix); --dry-run to preview
 scripts/bump-version --check          # report drift for every tool (read-only)
-scripts/sync-nvim-locks               # snapshot live nvim plugin/LSP locks into the repo
 git config core.hooksPath .githooks   # enable pre-commit checks (policy + gitleaks)
 ```
 
@@ -170,7 +169,8 @@ The only agent plugins installed are this repo's own Claude Code mods,
 `config/claude/mods/` → `~/.claude/mods/` (`context-meter`: context usage band
 above the prompt; `pretty-tools`: tool calls drawn as blocks with their diff or
 output; `cache-timer`: minutes left on the 1-hour prompt cache, under the
-prompt). They are registered as the local `my-mods` marketplace through the
+prompt; `delegation-workers`: live list of agent-delegation worker tasks above
+the prompt). They are registered as the local `my-mods` marketplace through the
 `claude` CLI on every refresh, skipped with a warning when `claude` is not on
 PATH. Add any other plugins, marketplaces, or hook tools per machine after the
 base install. The installer leaves content it does not manage in the agent
@@ -200,28 +200,14 @@ all of these defensively.
 
 On native Windows the installer manages **Alacritty**
 (`windows/alacritty/alacritty.toml` → `%APPDATA%lacritty\`, because Alacritty
-reads no XDG path on Windows). It uses Catppuccin Macchiato as outer chrome so
-the tmux strip inside a WSL shell stays visually distinct. See
-[`windows/README.md`](windows/README.md).
+reads no XDG path on Windows). It uses Solarized Dark (vivid) to match Neovim.
+See [`windows/README.md`](windows/README.md).
 
 ## Neovim
 
-Open Neovim and use `<leader>?` or `:VSCodeKeys` for the local VS Code-style key cheat sheet.
+Plugins are managed by Neovim's built-in `vim.pack` (first launch asks to install them); update with `:lua vim.pack.update()`. Mason installs clangd, rust-analyzer and, when `npm` is available, pyright at startup. Format on save runs only for filetypes with a configured formatter (stylua, shfmt); `<leader>f` formats manually and falls back to the language server.
 
-After `:Lazy update` / `:MasonUpdate`, snapshot both lockfiles back into the repo with `scripts/sync-nvim-locks` (run `--restore` on a fresh machine before `:Lazy restore`).
-
-On native Windows, Neo-tree refreshes on editor saves instead of keeping OS
-file watchers on busy build trees. Press `R` in the explorer to refresh changes
-made by external tools. Clangd keeps background indexing and clang-tidy, with
-two workers on Windows, lower indexing priority, and error-only logging.
-Language servers use Neovim's native configuration API; color previews load
-only for supported filetypes instead of delaying the first insert everywhere.
-The status line reuses Gitsigns' cached diff counts, and the symbol outline
-loads when requested rather than tracking every buffer from startup.
-
-Files detected by Snacks as large (over 1.5 MB or average lines over 1,000 bytes) skip
-completion scans, regex syntax and indent guides. Undo remains persistent,
-with 1,000 changes for ordinary buffers and 100 for large buffers.
+Clangd keeps background indexing and clang-tidy, with two workers on Windows, lower indexing priority, and error-only logging. It also finds `compile_commands.json` in `Build/`, `build/`, `out/build/` and `cmake-build-*`.
 
 To audit Neovim keymap overlaps after editing:
 

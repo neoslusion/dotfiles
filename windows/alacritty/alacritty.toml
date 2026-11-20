@@ -1,4 +1,4 @@
-# Alacritty configuration - native Windows, Catppuccin Macchiato outer chrome.
+# Alacritty configuration - native Windows, Solarized Dark (vivid) outer chrome.
 # Deployed to %APPDATA%\alacritty\alacritty.toml by windows/install.ps1.
 #
 # WHY NOT ~/.config/alacritty/: on Windows Alacritty reads ONLY
@@ -7,9 +7,9 @@
 # deploy to a path this machine silently ignores. Hence windows/ plus an
 # explicit destination.
 #
-# Deliberately NOT Tokyo Night. This is outer Windows chrome: warm pastel frame
-# outside, solid Tokyo Night tmux strip inside. Two layers, two looks - you always know
-# which layer a bar belongs to.
+# Solarized Dark (vivid) on purpose: the same palette as Neovim's
+# solarized-osaka. The tmux strip inside a WSL shell keeps its own Tokyo Night
+# accents, so the outer and inner layers still read apart.
 #
 # MANAGED FILE: re-running install.ps1 replaces this file and keeps the previous
 # copy as alacritty.toml.bak. Local tweaks will be overwritten; put anything you
@@ -67,73 +67,64 @@ y = 1
 # glassy; note it also fades vim and other programs' own backgrounds.
 transparent_background_colors = true
 
-# Catppuccin Macchiato. Each value is annotated with its upstream palette key so
-# a future theme swap is a search rather than a guess.
+# Solarized Dark vivid, ported from craftzdog's Ghostty theme (the palette the
+# same repo uses for solarized-osaka.nvim). Each value is annotated with its
+# Solarized role so a future theme swap is a search rather than a guess.
 
 [colors.primary]
-background = "#24273a" # base
-foreground = "#cad3f5" # text
-dim_foreground = "#a5adcb" # subtext0
+background = "#031219" # base03 (vivid)
+foreground = "#91a8aa" # base0
+dim_foreground = "#6e8b95" # base01
 
 [colors.cursor]
-text = "#24273a" # base
-cursor = "#f4dbd6" # rosewater
+text = "#002831" # base03 surface
+cursor = "#91a8aa" # base0
 
 [colors.vi_mode_cursor]
 # Sibling of [colors.cursor], NOT a child of it. Alacritty warns
 # "Unused config key: vi_mode_cursor" for the nested spelling.
-text = "#24273a" # base
-cursor = "#f5bde6" # pink
+text = "#002831" # base03 surface
+cursor = "#f8579a" # magenta
 
 [colors.selection]
-text = "#24273a" # base
-background = "#5b6078" # surface2
+text = "#9fb2b2" # base1
+background = "#002831" # base03 surface
 
 [colors.search]
-matches = { foreground = "#24273a", background = "#eed49f" } # yellow
-focused_match = { foreground = "#24273a", background = "#f5a97f" } # peach
+matches = { foreground = "#002831", background = "#d49a0a" } # yellow
+focused_match = { foreground = "#002831", background = "#fb5c41" } # orange
 
 [colors.hints]
-start = { foreground = "#24273a", background = "#b7bdf8" } # lavender
-end = { foreground = "#24273a", background = "#8aadf4" } # blue
+start = { foreground = "#002831", background = "#8987d3" } # violet
+end = { foreground = "#002831", background = "#529ef9" } # blue
 
 [colors.line_indicator]
-foreground = "#24273a" # base
-background = "#f5bde6" # pink
+foreground = "#002831" # base03 surface
+background = "#f8579a" # magenta
 
 [colors.footer_bar]
-foreground = "#24273a" # base
-background = "#a5adcb" # subtext0
+foreground = "#002831" # base03 surface
+background = "#6e8b95" # base01
 
 [colors.normal]
-black = "#181926" # crust
-red = "#ed8796" # red
-green = "#a6da95" # green
-yellow = "#eed49f" # yellow
-blue = "#8aadf4" # blue
-magenta = "#f5bde6" # pink
-cyan = "#8bd5ca" # teal
-white = "#b8c0e0" # subtext1
+black = "#002831" # base03 (palette 0)
+red = "#f86265" # red
+green = "#94b109" # green
+yellow = "#d49a0a" # yellow
+blue = "#529ef9" # blue
+magenta = "#f8579a" # magenta
+cyan = "#32b9aa" # cyan
+white = "#f0ebdc" # base2
 
 [colors.bright]
-black = "#6e738d" # overlay0
-red = "#ed8796" # red
-green = "#a6da95" # green
-yellow = "#eed49f" # yellow
-blue = "#8aadf4" # blue
-magenta = "#f5bde6" # pink
-cyan = "#8bd5ca" # teal
-white = "#cad3f5" # text
-
-[colors.dim]
-black = "#181926" # crust
-red = "#ee99a0" # maroon
-green = "#a6da95" # green
-yellow = "#eed49f" # yellow
-blue = "#8aadf4" # blue
-magenta = "#f5bde6" # pink
-cyan = "#8bd5ca" # teal
-white = "#a5adcb" # subtext0
+black = "#6e8b95" # base01 (palette 8)
+red = "#fb5c41" # orange (bright red)
+green = "#6e8b95" # base01 (palette 10)
+yellow = "#7895a0" # base00 (palette 11)
+blue = "#91a8aa" # base0 (palette 12)
+magenta = "#8987d3" # violet (palette 13)
+cyan = "#9fb2b2" # base1 (palette 14)
+white = "#fdf7e7" # base3 (palette 15)
 
 [cursor]
 # The visual bell flashes at the cursor colour, so keep the cursor the
@@ -145,11 +136,11 @@ thickness = 1.0
 
 [bell]
 # Audible bell off, quick visual flash at the cursor colour. Alacritty's bell
-# accepts hex only and hard-errors on a symbolic value, so rosewater is spelled
+# accepts hex only and hard-errors on a symbolic value, so base0 is spelled
 # out.
 animation = "EaseOut"
 duration = 75
-color = "#f4dbd6" # rosewater - same value as [colors.cursor] cursor
+color = "#91a8aa" # base0 - same value as [colors.cursor] cursor
 
 [scrolling]
 history = 10000

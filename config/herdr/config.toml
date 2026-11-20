@@ -4,7 +4,7 @@
 # never overwrites it once present.
 #
 # Minimal on purpose: herdr works with no config at all. The seed sets only
-# the Tokyo Night theme and skips the first-run onboarding flow.
+# the Solarized theme (matching Neovim) and skips the first-run onboarding flow.
 #
 # KEYBINDING GOTCHAS (the array bug burned us once):
 # - Every keys.* field takes a SINGLE string ("alt+h"), never an array.
@@ -25,12 +25,14 @@ onboarding = false
 default_shell = ""
 
 [theme]
-name = "tokyo-night"
-# Built-in (17 themes ship with herdr; names flexible: tokyo-night works as-is).
-# Light/dark siblings are built in too; uncomment to follow the host terminal's
-# appearance switch (manually picking a theme in Settings disables auto_switch):
+name = "solarized"
+# Built-in themes: catppuccin, terminal, tokyo-night, dracula, nord, gruvbox,
+# one-dark, solarized, kanagawa, rose-pine, vesper. Solarized is the dark pick
+# that matches Neovim's solarized-osaka; herdr ships no light sibling for it, so
+# auto-switch stays off. Uncomment to follow the host terminal's appearance
+# switch instead (manually picking a theme in Settings disables auto_switch):
 # auto_switch = true
-# light_name = "tokyo-night-day"
+# dark_name = "solarized"
 
 # Layer doctrine: the terminal keeps only its stock Ctrl+Shift chords, herdr owns
 # pane/tab control via direct alt chords, shell/nvim own everything else.

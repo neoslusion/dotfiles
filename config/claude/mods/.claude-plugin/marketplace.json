@@ -15,6 +15,10 @@
     {
       "name": "cache-timer",
       "source": "./cache-timer"
+    },
+    {
+      "name": "delegation-workers",
+      "source": "./delegation-workers"
     }
   ]
 }

@@ -131,7 +131,7 @@ register_mods() { # register_mods <marketplace path> <mod>...
     for mod in "$@"; do entries="$entries\"$mod@my-mods\": [{}],"; done
     printf '{"version": 2, "plugins": {%s}}\n' "${entries%,}" > "$AGENT_HOME/.claude/plugins/installed_plugins.json"
 }
-all_mods=(context-meter pretty-tools cache-timer)
+all_mods=(context-meter pretty-tools cache-timer delegation-workers)
 register_mods "$(native "$TMP_DIR/deleted-temp-home/.claude/mods")" "${all_mods[@]}"
 expect_agents '^fail claude: my-mods registered at' 'mods registered at a deleted path'
 register_mods "$(native "$AGENT_HOME/.claude/mods")" context-meter pretty-tools
