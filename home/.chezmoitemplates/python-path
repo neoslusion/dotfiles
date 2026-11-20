@@ -7,13 +7,17 @@
 */ -}}
 {{- $py := "" -}}
 {{- if eq .chezmoi.os "windows" -}}
+{{- /* Scoop's python first (Scoop owns the Windows tools), then a real one on
+       PATH, then the usual install locations. */ -}}
+{{-   $scoopPy := joinPath .chezmoi.homeDir "scoop/apps/python/current/python.exe" -}}
 {{-   $onPath := lookPath "python" -}}
-{{-   if and $onPath (not (contains "WindowsApps" $onPath)) -}}
+{{-   if stat $scoopPy -}}
+{{-     $py = $scoopPy -}}
+{{-   else if and $onPath (not (contains "WindowsApps" $onPath)) -}}
 {{-     $py = $onPath -}}
 {{-   else -}}
 {{-     $local := env "LOCALAPPDATA" -}}
-{{-     range (list (joinPath .chezmoi.homeDir "scoop/apps/python/current/python.exe")
-                    (joinPath $local "Python/pythoncore-*/python.exe")
+{{-     range (list (joinPath $local "Python/pythoncore-*/python.exe")
                     (joinPath $local "Programs/Python/Python3*/python.exe")) -}}
 {{-       $hits := glob . -}}
 {{-       if and (not $py) $hits }}{{ $py = last $hits }}{{ end -}}

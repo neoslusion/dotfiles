@@ -22,16 +22,14 @@ gui:
       - '#91a8aa' # base0
   mouseEvents: false
   scrollHeight: 30
-
 git:
   autoFetch: false
   commit:
     autoWrapCommitMessage: true
     autoWrapWidth: 72
-  pagers:
+  diffRenderers:
     - colorArg: always
-      pager: delta --dark --syntax-theme="Solarized (dark)" --paging=never
-
+      command: delta --dark --syntax-theme="Solarized (dark)" --paging=never
 customCommands:
   - key: '<c-r>'
     command: 'git rebase -i HEAD~{{.Form.NumberOfCommits}}'

@@ -15,22 +15,12 @@ $buckets = @(scoop bucket list 6> $null | ForEach-Object { $_.Name })
 if ($buckets -notcontains '{{ . }}') { scoop bucket add '{{ . }}' }
 {{- end }}
 
-# Skip an app installed by Scoop already, or whose command is on PATH from
-# winget or a vendor installer. The WindowsApps python alias never counts.
-function Install-ScoopApp([string]$Spec, [string]$Cmd) {
+# Scoop is the owner of every tool here: an app is skipped only when Scoop
+# already has it. A copy from the Store, winget or another installer does not
+# count; remove it yourself if you want only one.
+function Install-ScoopApp([string]$Spec) {
     $name = ($Spec -split '/')[-1]
     if (Test-Path (Join-Path $HOME "scoop\apps\$name")) { return }
-    # A font has no command: look in the machine (winget) and per-user font dirs.
-    if ($name -like '*-NF') {
-        $font = Get-ChildItem "$env:WINDIR\Fonts", "$env:LOCALAPPDATA\Microsoft\Windows\Fonts" `
-            -Filter "$($name -replace '-NF$', '')NerdFont*" -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($font) { return }
-    }
-    if ($Cmd) {
-        $hit = Get-Command $Cmd -CommandType Application -ErrorAction SilentlyContinue |
-            Where-Object { $_.Source -notmatch '\\WindowsApps\\' } | Select-Object -First 1
-        if ($hit) { return }
-    }
     scoop install $Spec
     # Scoop's exit code is unreliable through its shim; check the app dir.
     if (-not (Test-Path (Join-Path $HOME "scoop\apps\$name"))) {
@@ -38,7 +28,7 @@ function Install-ScoopApp([string]$Spec, [string]$Cmd) {
     }
 }
 {{- range .packages.scoop.apps }}
-Install-ScoopApp '{{ .name }}' '{{ .cmd }}'
+Install-ScoopApp '{{ . }}'
 {{- end }}
 
 # Herdr: native Windows is preview-only with no Scoop or winget package, so

@@ -46,36 +46,35 @@ packages:
       - FelixKratz/formulae/sketchybar
     casks:
       - font-jetbrains-mono-nerd-font
-  # Windows: Scoop, user scope, no admin. An app whose command is already on
-  # PATH (installed by winget or a vendor installer) is skipped, not doubled.
+  # Windows: Scoop for everything (user scope, no admin), even when the
+  # Store or winget has a copy too.
   scoop:
     buckets:
       - extras
       - nerd-fonts
     apps:
-      # name: scoop app (bucket/app); cmd: PATH guard, "" = app dir only
-      - { name: git, cmd: git }
-      - { name: pwsh, cmd: pwsh }
-      - { name: extras/alacritty, cmd: alacritty }
-      - { name: nerd-fonts/JetBrainsMono-NF, cmd: "" }
-      - { name: starship, cmd: starship }
-      - { name: zoxide, cmd: zoxide }
-      - { name: atuin, cmd: atuin }
-      - { name: fzf, cmd: fzf }
-      - { name: bat, cmd: bat }
-      - { name: fd, cmd: fd }
-      - { name: eza, cmd: eza }
-      - { name: delta, cmd: delta }
+      - git
+      - pwsh
+      - extras/alacritty
+      - nerd-fonts/JetBrainsMono-NF
+      - starship
+      - zoxide
+      - atuin
+      - fzf
+      - bat
+      - fd
+      - eza
+      - delta
       # main/ prefix: a bare `python` makes Scoop resolve a .\Python
-      # directory in the cwd instead. The guard ignores the WindowsApps alias.
-      - { name: main/python, cmd: python }
-      - { name: jq, cmd: jq }
-      - { name: ripgrep, cmd: rg }
-      - { name: neovim, cmd: nvim }
+      # directory in the cwd instead.
+      - main/python
+      - jq
+      - ripgrep
+      - neovim
       # Treesitter parser builds: zig is the C compiler, plus the CLI and cmake.
-      - { name: zig, cmd: zig }
-      - { name: cmake, cmd: cmake }
-      - { name: tree-sitter, cmd: tree-sitter }
-      - { name: win32yank, cmd: win32yank }
-      - { name: extras/lazygit, cmd: lazygit }
-      - { name: uv, cmd: uv }
+      - zig
+      - cmake
+      - tree-sitter
+      - win32yank
+      - extras/lazygit
+      - uv
