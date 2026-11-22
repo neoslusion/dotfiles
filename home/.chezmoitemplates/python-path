@@ -9,9 +9,16 @@
 {{- if eq .chezmoi.os "windows" -}}
 {{- /* Scoop's python first (Scoop owns the Windows tools), then a real one on
        PATH, then the usual install locations. */ -}}
-{{-   $scoopPy := joinPath .chezmoi.homeDir "scoop/apps/python/current/python.exe" -}}
+{{- /* python3*: the pinned minor app from packages.yaml (python314, ...).
+       Glob the app dirs, then stat current/: a wildcard glob does not descend
+       through Scoop's `current` junction. */ -}}
+{{-   $scoopPy := "" -}}
+{{-   range glob (joinPath .chezmoi.homeDir "scoop/apps/python3*") -}}
+{{-     $exe := joinPath . "current/python.exe" -}}
+{{-     if stat $exe }}{{ $scoopPy = $exe }}{{ end -}}
+{{-   end -}}
 {{-   $onPath := lookPath "python" -}}
-{{-   if stat $scoopPy -}}
+{{-   if $scoopPy -}}
 {{-     $py = $scoopPy -}}
 {{-   else if and $onPath (not (contains "WindowsApps" $onPath)) -}}
 {{-     $py = $onPath -}}

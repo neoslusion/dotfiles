@@ -13,8 +13,7 @@ PowerShell
 {{- end }}
 
 {{- if eq .chezmoi.os "windows" }}
-# Unix only: zsh, tmux, mise and the ~/.local/bin helpers. herdr reads
-# %APPDATA%\herdr on Windows, deployed from AppData/Roaming instead.
+# Unix only: zsh, tmux, mise and the ~/.local/bin helpers.
 .zshrc
 .zshenv
 .zprofile
@@ -23,7 +22,6 @@ PowerShell
 .config/tmux
 .config/atuin
 .config/bottom
-.config/herdr
 .config/mise
 .local
 .secrets/env.sh

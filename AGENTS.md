@@ -20,7 +20,7 @@ at its latest version (no pins).
 - `home/.chezmoidata/packages.yaml`: base packages per manager (apt, pacman, dnf, brew, scoop).
 - `home/.chezmoiscripts/`: `run_onchange_after_10-install-packages` (.sh + .ps1; Unix also installs mise and runs `mise install`), `20-windows-setup.ps1` (`XDG_CONFIG_HOME`, `$PROFILE` line), `30-register-claude-mods` (.sh + .ps1). Each script is a template wrapped in an OS guard, so it renders empty, and is skipped, elsewhere. `.ps1.tmpl` scripts have no BOM for the same reason.
 - `home/.chezmoiexternal.toml.tmpl`: Oh My Zsh + plugins, TPM, Linux Nerd Font.
-- `home/.chezmoitemplates/`: shared sources: `ENGINEERING.md`, `claude-settings.json`, `antigravity-settings.json`, `herdr-config.toml`, and helpers `python-path`, `merge-json`, `ensure-line`, `mods-hash`.
+- `home/.chezmoitemplates/`: shared sources: `ENGINEERING.md`, `claude-settings.json`, `antigravity-settings.json`, and helpers `python-path`, `merge-json`, `ensure-line`, `mods-hash`.
 - `home/dot_config/mise/config.toml`: every Unix CLI tool and runtime.
 - `home/dot_config/nvim/`: Neovim (`init.lua`, `lua/config/`, `lua/plugins/`, `after/lsp/`).
 - `home/dot_claude/mods/`: first-party Claude Code mods (`my-mods` folder marketplace).
@@ -40,10 +40,10 @@ pre-commit install              # gitleaks on commit
 
 ## Conventions
 
-- **Windows paths.** Neovim and lazygit read `~/.config` on Windows only because
-  `20-windows-setup` sets `XDG_CONFIG_HOME`; keep their configs under
-  `dot_config/`, never duplicated under `AppData/`. Alacritty and herdr ignore
-  XDG on Windows, so they live under `home/AppData/Roaming/`.
+- **Windows paths.** Neovim, lazygit and herdr read `~/.config` on Windows only
+  because `20-windows-setup` sets `XDG_CONFIG_HOME`; keep their configs under
+  `dot_config/`, never duplicated under `AppData/`. Alacritty ignores XDG on
+  Windows, so it lives under `home/AppData/Roaming/`.
 - **Shared, tool-written files are merged, never replaced.** `~/.claude/settings.json`
   and Antigravity's `settings.json` use `modify_` + `merge-json` (repo keys win,
   nested objects merge, other keys kept, unchanged content returns the live

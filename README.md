@@ -140,7 +140,7 @@ See [KEYBINDINGS.md](KEYBINDINGS.md) for the full list.
 - `home/`: the files deployed to `$HOME`, in chezmoi naming (`dot_`, `create_`, `modify_`).
 - `home/.chezmoidata/packages.yaml`: package lists per platform.
 - `home/.chezmoiscripts/`: the install and setup scripts.
-- `home/.chezmoitemplates/`: shared sources (settings, ENGINEERING.md, herdr seed).
+- `home/.chezmoitemplates/`: shared sources (settings, ENGINEERING.md).
 - `.github/workflows/ci.yml`: gitleaks, shellcheck, and a full `chezmoi init --apply` on Ubuntu, macOS, Arch, Fedora and Windows.
 
 ## License

@@ -1,5 +1,6 @@
 # Herdr seed config — deployed ONLY if the live config.toml does not exist
-# (Linux: ~/.config/herdr/config.toml; Windows: %APPDATA%\herdr\config.toml).
+# (~/.config/herdr/config.toml; on Windows only because XDG_CONFIG_HOME is set,
+# else herdr falls back to %APPDATA%\herdr).
 # herdr Settings TUI writes back into config.toml at runtime; the installer
 # never overwrites it once present.
 #

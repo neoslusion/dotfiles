@@ -52,6 +52,7 @@ packages:
     buckets:
       - extras
       - nerd-fonts
+      - versions
     apps:
       - git
       - pwsh
@@ -65,9 +66,10 @@ packages:
       - fd
       - eza
       - delta
-      # main/ prefix: a bare `python` makes Scoop resolve a .\Python
-      # directory in the cwd instead.
-      - main/python
+      # The only Python, one minor line from `versions`: the global venv
+      # (~/.virtualenvs/global) is built on it. Change the name (python315)
+      # on purpose and rebuild the venv.
+      - versions/python314
       - jq
       - ripgrep
       - neovim
