@@ -54,17 +54,17 @@ Every workspace manager and editor in this repository shares identical chords fo
 | **Focus Down** | `Alt + j` | `Alt + j` | `Alt + j` / `Alt + ↓` |
 | **Focus Up** | `Alt + k` | `Alt + k` | `Alt + k` / `Alt + ↑` |
 | **Focus Right** | `Alt + l` | `Alt + l` | `Alt + l` / `Alt + →` |
-| **Split Side-by-Side** | `Alt + n` | `Alt + n` | `<C-w>v` |
-| **Split Stacked** | `Alt + -` | `Alt + -` | `<C-w>s` |
+| **Split Side-by-Side** | `Alt + n` | `Alt + n` | `sv` |
+| **Split Stacked** | `Alt + -` | `Alt + -` | `ss` |
 | **Zoom / Fullscreen** | `Alt + z` | `Alt + z` | `<C-w>o` |
 | **Close Pane** | `Alt + q` | `Alt + q` | `:q<CR>` |
-| **New Tab** | `Alt + t` | `Alt + t` | `:tabnew<CR>` |
-| **Next Tab / Window** | `Alt + ]` | `Alt + ]` | `gt` / `]b` |
-| **Prev Tab / Window** | `Alt + [` | `Alt + [` | `gT` / `[b` |
+| **New Tab** | `Alt + t` | `Alt + t` | `te` |
+| **Next Tab / Window** | `Alt + ]` | `Alt + ]` | `<Tab>` |
+| **Prev Tab / Window** | `Alt + [` | `Alt + [` | `<S-Tab>` |
 | **Jump to Tab 1..9** | `Alt + 1..9` | `Alt + 1..9` | — |
 | **Workspace / Session** | `Alt + w` | `Alt + w` (`choose-tree`) | — |
 | **Toggle Sidebar / Bar** | `Alt + b` | `Alt + b` | — |
-| **Lazygit Popup** | `Alt + g` / `prefix + Alt + g` | `Alt + g` / `prefix + Alt + g` | `Alt + g` / `<leader>gg` |
+| **Lazygit Popup** | `Alt + g` / `prefix + Alt + g` | `Alt + g` / `prefix + Alt + g` | `;g` |
 
 Tmux mirrors Herdr's `[keys]` table chord for chord and binds no other direct chords, so anything else (e.g. `Alt + Arrow`, `Shift + Arrow`) reaches the app in the pane under either muxer.
 
@@ -74,7 +74,7 @@ Tmux mirrors Herdr's `[keys]` table chord for chord and binds no other direct ch
 
 Lazygit is configured with a Solarized palette (`home/dot_config/lazygit/config.yml`) and is callable anywhere:
 
-- **Invocation**: Press **`Alt + g`** in Herdr, Tmux, or Neovim (or type **`lg`** in any shell).
+- **Invocation**: Press **`Alt + g`** in Herdr or Tmux, **`;g`** in Neovim (or type **`lg`** in any shell).
 - **Dismissal**: Press **`q`** inside Lazygit to close the modal popup and return directly to your previous prompt or buffer.
 - **Editor Integration**: Pressing **`e`** opens the selected file directly in Neovim (`$EDITOR="nvim"`).
 
@@ -132,29 +132,120 @@ Lazygit is configured with a Solarized palette (`home/dot_config/lazygit/config.
 | `<C-j>` / `<C-k>` | Move commit down / up in git history |
 | `d` | Drop commit |
 | `t` | Revert commit |
-| `<C-r>` | **Interactive rebase** of the last N commits (dotfiles custom shortcut) |
+| `<C-r>` | **Interactive rebase** of the last N commits (dotfiles custom command, default 5) |
+| `<C-t>` | **Annotated tag** on the selected commit (dotfiles custom command) |
 | `g` | Reset options (soft, mixed, hard reset to selected commit) |
 
 #### Push & Sync
 | Key | Action |
 | :--- | :--- |
 | `p` | Pull changes from remote |
-| `P` | **Push with lease** (`git push --force-with-lease` custom command) |
+| `P` | Push (stock; asks before force-pushing a rejected push) |
 | `z` / `<C-z>` | Undo / redo last git action |
 
 ---
 
-## 4. Neovim & Smart Split Navigation
+## 4. Neovim
 
-- **Vim-Aware Split Navigation**: In Tmux, `Alt + h/j/k/l` (and `Alt + Arrows` inside Neovim) move between Neovim windows and Tmux panes via `vim-tmux-navigator`: at the edge of a Neovim window, the chord jumps into the adjacent Tmux pane. Herdr takes `Alt + h/j/k/l` itself, so there they always move between Herdr panes; use `Alt + Arrows` or `<C-w>` for Neovim splits.
-- **No Arrow Penalties**: Native arrow keys (`<Up>`, `<Down>`, `<Left>`, `<Right>`) are fully functional in all modes for fast cursor positioning, terminal history, and visual selection.
-- **Internal Window Management**: Standard `<C-w>` chords (`<C-w>v` vertical split, `<C-w>s` horizontal split, `<C-w>q` close, `<C-w>o` zoom) remain fully supported.
-- **Snacks Keymaps**:
-  - `<leader><space>`: Smart Find Files
-  - `<leader>,`: Buffer Picker
-  - `<leader>sg`: Ripgrep Search
-  - `<leader>gg` or `Alt + g`: Lazygit
-  - `<leader>gb`: Git blame line
+Defined in `home/dot_config/nvim/lua/config/keymaps.lua` and
+`lua/plugins/keymaps.lua`. **Leader is `Space`.** `;`, `s` and `\` are plain
+normal-mode prefixes. Check for duplicates with
+`python3 home/dot_local/bin/audit_nvim_keymaps.py home/dot_config/nvim`.
+
+- **Split Navigation**: In Tmux, `Alt + h/j/k/l` and `Alt + Arrows` move between Neovim windows and Tmux panes via `vim-tmux-navigator`: at the edge of a Neovim window, the chord jumps into the adjacent Tmux pane. Herdr takes `Alt + h/j/k/l` itself, so there they always move between Herdr panes; use `sh/sj/sk/sl` for Neovim splits.
+- Arrow keys and stock `<C-w>` chords keep working.
+
+#### Files & Search
+| Key | Action |
+| :--- | :--- |
+| `;f` | Find files |
+| `;r` | Live grep |
+| `;;` | Resume the last picker |
+| `\\` | Buffer list (jumps to the window if the buffer is already open) |
+| `;e` | Diagnostics |
+| `;n` | Notification history |
+| `sf` | Oil file explorer (float). Inside: `h` parent dir, `q` close; edit the listing and `:w` to create, rename or delete files |
+
+#### Windows & Tabs
+| Key | Action |
+| :--- | :--- |
+| `ss` / `sv` | Split stacked / side-by-side |
+| `sh` `sj` `sk` `sl` | Move to the split left / down / up / right |
+| `Alt + h/j/k/l`, `Alt + Arrows` | Move between splits and Tmux panes |
+| `te` | New tab |
+| `<Tab>` / `<S-Tab>` | Next / previous tab |
+
+#### LSP
+| Key | Action |
+| :--- | :--- |
+| `gd` / `gD` / `gy` / `gI` | Definition / declaration / type definition / implementation |
+| `gr` | References |
+| `K` | Hover |
+| `gK`, `<C-k>` (insert) | Signature help |
+| `<C-j>` | Next diagnostic (with float) |
+| `]]` / `[[` | Next / previous reference of the word under the cursor |
+| `;c` | Incoming calls |
+| `<leader>ca` | Code action (normal and visual) |
+| `<leader>cr` | Rename symbol |
+| `<leader>cR` | Rename file (updates imports) |
+| `<leader>cl` | LSP info |
+| `<leader>f` | Format buffer or selection |
+
+#### Git
+| Key | Action |
+| :--- | :--- |
+| `;g` | Lazygit |
+| `;h` | Git diff hunks picker |
+| `<leader>gb` / `<leader>gB` | Blame line / blame buffer |
+| `<leader>go` | Open the line's file at the commit that last changed it (new tab) |
+| `<leader>gs` | Stage buffer (unstage if nothing left to stage) |
+| `<leader>gh` | Stage hunk |
+| `<leader>gd` | Toggle inline diff overlay |
+| `]c` / `[c` | Next / previous change |
+| `<leader>dv` | Side-by-side diff view |
+| `<leader>dh` / `<leader>dH` | File history / repo history |
+
+#### Harpoon
+| Key | Action |
+| :--- | :--- |
+| `<leader>a` | Pin the current file |
+| `<leader>h` | Harpoon menu (reorder or delete; saves on close) |
+| `<leader>1` … `<leader>5` | Jump to pinned file 1–5 |
+
+#### Editing (differs from stock Vim)
+| Key | Action |
+| :--- | :--- |
+| `x` | Delete a character without touching the yank register |
+| `<leader>d` / `<leader>D` | Delete / delete to end of line without touching the yank (normal and visual) |
+| `<leader>c` / `<leader>C` | Change / change to end of line without touching the yank (normal and visual) |
+| `<leader>p` / `<leader>P` | Paste the last yank after / before, even after a delete |
+| `dw` | **Delete the word before the cursor** (use `de` / `daw` to delete forward) |
+| `+` / `-` | Increment / decrement the number under the cursor |
+| `<C-a>` | Select the whole buffer (not increment) |
+| `<leader>o` / `<leader>O` | New line below / above without comment continuation |
+| `<C-m>` | Jump forward in the jumplist |
+| `<` / `>`, `<Tab>` / `<S-Tab>` (visual) | Indent and keep the selection |
+| `<leader>yf` / `<leader>yp` | Yank relative / absolute path with line number |
+| `<leader>cc` (visual) | Copy the selection as a Markdown code block |
+| `<leader>bd` | Delete hidden buffers |
+
+#### Completion (blink.cmp, `enter` preset)
+| Key | Action |
+| :--- | :--- |
+| `<CR>` | Accept |
+| `<C-n>` / `<C-p>`, `<Up>` / `<Down>` | Next / previous item |
+| `<C-Space>` | Open menu / docs |
+| `<C-e>` | Close menu |
+| `<C-b>` / `<C-f>` | Scroll docs |
+| `<Tab>` / `<S-Tab>` | Next / previous snippet placeholder |
+
+On the `:` command line the menu opens automatically with ghost text;
+`<Left>` / `<Right>` still move the cursor. Brackets auto-close (mini.pairs).
+Lua and shell files format on save.
+
+#### Gotchas
+- Most terminals send the same code for `<CR>` and `<C-m>`, so `Enter` in normal mode jumps forward in the jumplist.
+- `<leader>c` and `<leader>d` are prefixes of longer maps (`<leader>ca`, `<leader>dv`, ...), so alone they wait for `timeoutlen` before acting.
 
 ---
 
@@ -173,5 +264,5 @@ Lazygit is configured with a Solarized palette (`home/dot_config/lazygit/config.
    - Modal popups are declared using `[[keys.command]]` with `type = "popup"`.
 
 4. **BOM & Line Endings**:
-   - All PowerShell `.ps1` files in this repo must retain their UTF-8 BOM, CRLF line endings, and ASCII strings (verified via `tests/windows_preflight.ps1`).
+   - Plain PowerShell `.ps1` files keep their UTF-8 BOM, CRLF line endings, and ASCII strings (`.gitattributes`); `*.ps1.tmpl` scripts are LF without a BOM.
    - All JSON configuration files (e.g. `settings.json`) must NOT include a UTF-8 BOM (`\ufeff`) to prevent parser failures.

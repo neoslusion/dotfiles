@@ -6,7 +6,8 @@ Dotfiles for Debian/Ubuntu (incl. WSL), Arch, Fedora, macOS and native Windows,
 managed by chezmoi. `.chezmoiroot` makes `home/` the source state; everything
 outside `home/` is repo tooling and never deployed. No build step, no installer
 of our own: `chezmoi init --apply` is the only entry point. Everything installs
-at its latest version (no pins).
+at its latest version; the one pin is Windows Python (`versions/python314`),
+because the global venv is built on it.
 
 ## Layout
 
@@ -59,7 +60,8 @@ pre-commit install              # gitleaks on commit
 - **A script re-runs when its rendered text changes:** embed a hash of any input
   it depends on (`{{ include "..." | sha256sum }}`, `mods-hash`).
 - **Packages:** add to `packages.yaml` (Unix base packages, Scoop on Windows) or
-  to `mise/config.toml` (Unix CLI tools). Do not add pins.
+  to `mise/config.toml` (Unix CLI tools). Do not add pins beyond the
+  Windows Python one; `python-path` finds whichever `python3*` Scoop app is installed.
 - **PowerShell:** pwsh 7 only, ASCII-only literals, `$ErrorActionPreference = 'Stop'`
   first. Plain `*.ps1` files are UTF-8 with BOM + CRLF (`.gitattributes`);
   `*.ps1.tmpl` scripts are LF without a BOM.

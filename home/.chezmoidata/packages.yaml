@@ -1,6 +1,7 @@
 # Packages per platform, read by home/.chezmoiscripts/*install-packages*.
 # A script re-runs only when its rendered text changes, i.e. when the list
-# for that platform changes. No versions: everything installs latest.
+# for that platform changes. No versions: everything installs latest, except
+# the Windows Python line (see the scoop list).
 #
 # Unix CLI tools (neovim, lazygit, starship, ...) come from mise on every
 # distro (home/dot_config/mise/config.toml), so these lists hold only the base

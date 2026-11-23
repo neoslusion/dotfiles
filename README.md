@@ -2,7 +2,8 @@
 
 Zsh, tmux, Neovim and agent configs for **Debian/Ubuntu (including WSL), Arch,
 Fedora, macOS and native Windows**, managed by [chezmoi](https://chezmoi.io).
-Everything installs at its latest version.
+Everything installs at its latest version, except Windows Python, pinned to
+one minor line (`python314`) because the global venv is built on it.
 
 ## Contents
 
@@ -38,8 +39,8 @@ What `apply` does:
    - **install-packages:** the base packages from `home/.chezmoidata/packages.yaml`
      (apt, pacman, dnf, Homebrew or Scoop), then on Linux and macOS mise and
      the tools in `~/.config/mise/config.toml`. Sets delta as git's pager.
-   - **windows-setup:** sets `XDG_CONFIG_HOME=~\.config` so Windows Neovim and
-     lazygit read the same `~/.config` as Unix, and adds one line to
+   - **windows-setup:** sets `XDG_CONFIG_HOME=~\.config` so Windows Neovim,
+     lazygit and herdr read the same `~/.config` as Unix, and adds one line to
      `$PROFILE` that loads `~\PowerShell\dotfiles.profile.ps1`.
    - **register-claude-mods:** registers `~/.claude/mods` as the `my-mods`
      marketplace through the `claude` CLI (skipped when `claude` is missing).
@@ -102,15 +103,16 @@ Clangd finds `compile_commands.json` in `Build/`, `build/`, `out/build/` and
 ignores.
 
 On Windows, treesitter builds parsers with zig, and pyright needs Node.js
-(`winget install OpenJS.NodeJS.LTS`).
+(`scoop install nodejs-lts`).
 
 ## Keys
 
-One set of Alt chords across herdr, tmux and Neovim:
+One set of Alt chords across herdr and tmux (Neovim shares `Alt + h/j/k/l`;
+its own keys use `Space`, `;` and `s`):
 
 | Key | Action |
 | :--- | :--- |
-| `Alt + h / j / k / l` | Focus pane or Neovim split |
+| `Alt + h / j / k / l` | Focus pane (or Neovim split under tmux) |
 | `Alt + n` / `Alt + -` | Split side-by-side / stacked |
 | `Alt + z` | Zoom pane |
 | `Alt + q` | Close pane |
